@@ -14,7 +14,6 @@ public class StartTask implements Task {
 
 	@Override
 	public void run() {
-		messageService.setTaskExecutor(executor);
 		executor.start();
 		messageService.open();
 	}
