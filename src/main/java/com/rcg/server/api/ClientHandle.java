@@ -14,5 +14,9 @@ public interface ClientHandle {
 	public AckStatus process(Message message);
 
 	public long getUid();
+	
+	public String getHost();
+	
+	public int getPort();
 
 }

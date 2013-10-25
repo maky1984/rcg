@@ -3,7 +3,7 @@ package com.rcg.server;
 public class StandaloneRunner {
 
 	public static void main(String[] args) {
-		new StartTask().run();
+		new StartServerTask().run();
 	}
 
 }
