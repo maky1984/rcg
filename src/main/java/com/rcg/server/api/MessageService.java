@@ -2,7 +2,7 @@ package com.rcg.server.api;
 
 public interface MessageService {
 
-	public void init(ClientHandleManager clientHandleManager, MessageFactory messageFactory);
+	public void init(ClientHandleManager clientHandleManager);
 
 	public void open(int port);
 

@@ -5,7 +5,6 @@ class Header {
 	private long uid;
 	private long code;
 	private long messageSize;
-	private int messageType;
 	private long reserved1;
 	private long reserved2;
 	private long reserved3;
@@ -33,14 +32,6 @@ class Header {
 
 	public void setMessageSize(long messageSize) {
 		this.messageSize = messageSize;
-	}
-	
-	public int getMessageType() {
-		return messageType;
-	}
-	
-	public void setMessageType(int messageType) {
-		this.messageType = messageType;
 	}
 
 	public long getReserved1() {

@@ -1,14 +1,21 @@
 package com.rcg.server.api;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface Message {
+public class Message {
 
-	public boolean hasTask();
+	private byte[] data;
 	
-	public Task getTask();
+	public Message(byte[] data) {
+	}
+
+	@JsonIgnore
+	public long getSizeInBytes() {
+		return data.length;
+	}
 	
-	public long getSizeInBytes();
+	public byte[] getData() {
+		return data;
+	}
 	
 }

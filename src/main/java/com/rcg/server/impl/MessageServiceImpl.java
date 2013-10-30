@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.omg.PortableServer.POAPackage.ObjectAlreadyActive;
+import javax.xml.soap.MessageFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.ClientHandle.AckStatus;
 import com.rcg.server.api.ClientHandleManager;
 import com.rcg.server.api.Message;
-import com.rcg.server.api.MessageFactory;
 import com.rcg.server.api.MessageService;
 
 public class MessageServiceImpl implements MessageService, Runnable {
@@ -33,18 +33,16 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	private List<Client> clients = Collections.synchronizedList(new ArrayList<Client>());
 
 	private ClientHandleManager clientHandleManager;
-	private MessageFactory messageFactory;
 
 	public int port;
 	private ServerSocket serverSocket;
 	private ObjectMapper mapper;
 	private volatile boolean isStopped;
 
-	private static Header createHeader(long uid, long size, int messageType) {
+	private static Header createHeader(long uid, long size) {
 		Header header = new Header();
 		header.setUid(uid);
 		header.setMessageSize(size);
-		header.setMessageType(messageType);
 		return header;
 	}
 
@@ -63,9 +61,8 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	@Override
-	public void init(ClientHandleManager clientHandleManager, MessageFactory messageFactory) {
+	public void init(ClientHandleManager clientHandleManager) {
 		this.clientHandleManager = clientHandleManager;
-		this.messageFactory = messageFactory;
 	}
 
 	@Override
@@ -222,7 +219,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 				Header header = mapper.readValue(in, Header.class);
 				// register client connection
 				if (innerCheckClient(socket, header)) {
-					Message message = mapper.readValue(in, );
+					Message message = mapper.readValue(in, Message.class);
 					boolean checkMessage = checkMessage(header, message);
 					AckStatus status;
 					if (checkMessage) {

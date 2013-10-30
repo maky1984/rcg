@@ -2,9 +2,12 @@ package com.rcg.server.impl;
 
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
+import com.rcg.server.api.MessageHandler;
 
 public class ClientHandleImpl implements ClientHandle {
 
+	private MessageHandler handler;
+	
 	boolean isFull;
 	private long uid;
 	private String host;
@@ -27,8 +30,16 @@ public class ClientHandleImpl implements ClientHandle {
 	}
 
 	@Override
+	public void setMessageHandler(MessageHandler messageHandler) {
+		handler = messageHandler;
+	}
+	
+	@Override
 	public AckStatus process(Message message) {
 		System.out.println("Message:" + message);
+		if (handler != null) {
+			handler.accept(message, this);
+		}
 		return AckStatus.OK;
 	}
 

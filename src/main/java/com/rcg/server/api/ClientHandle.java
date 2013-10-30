@@ -13,6 +13,8 @@ public interface ClientHandle {
 	 */
 	public AckStatus process(Message message);
 
+	public void setMessageHandler(MessageHandler messageHandler);
+	
 	public long getUid();
 	
 	public String getHost();
