@@ -4,6 +4,14 @@
 	<artifactId>rolecardgame</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<dependencies>
+		<!-- JavaFX -->
+		<dependency>
+			<groupId>com.oracle</groupId>
+			<artifactId>javafx</artifactId>
+			<version>2.2</version>
+			<systemPath>${java.home}/lib/jfxrt.jar</systemPath>
+			<scope>system</scope>
+		</dependency>
 		<!-- Jackson - JSON parsing/creating -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

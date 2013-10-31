@@ -1,10 +1,10 @@
-package com.rcg.model.server.impl;
+package com.rcg.game.model.server.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rcg.model.server.Game;
-import com.rcg.model.server.Player;
+import com.rcg.game.model.server.Game;
+import com.rcg.game.model.server.Player;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -85,8 +85,9 @@ public class GameImpl implements Game, MessageHandler {
 	}
 	
 	@Override
-	public void accept(Message message, ClientHandle caller) {
+	public boolean accept(Message message, ClientHandle caller) {
 		// TODO:
+		return false;
 	}
 
 }

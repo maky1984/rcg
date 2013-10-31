@@ -3,7 +3,7 @@ package com.rcg.server.api;
 public interface ClientHandle {
 
 	public enum AckStatus {
-		OK, DENIED, DENIED_SUM_CHECK;
+		OK, DENIED, DENIED_SUM_CHECK, UNEXPECTED_CLASS;
 	}
 
 	/**
@@ -20,5 +20,7 @@ public interface ClientHandle {
 	public String getHost();
 	
 	public int getPort();
+	
+	public void updateUid(long uid);
 
 }

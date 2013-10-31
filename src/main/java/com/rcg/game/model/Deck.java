@@ -1,4 +1,4 @@
-package com.rcg.model;
+package com.rcg.game.model;
 
 public interface Deck {
 

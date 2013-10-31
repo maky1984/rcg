@@ -47,14 +47,12 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	private static class Client {
-		long uid;
 		ClientHandle handle;
 		Socket socket;
 	}
 
 	private static Client createClient(ClientHandle handle, Header header, Socket socket) {
 		Client client = new Client();
-		client.uid = header == null ? handle.getUid() : header.getUid();
 		client.handle = handle;
 		client.socket = socket;
 		return client;
@@ -66,7 +64,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	@Override
-	public void open(int port) {
+	public synchronized void open(int port) {
 		if (clientHandleManager == null) {
 			logger.error("ERROR! Client handle manager not provided");
 		} else {
@@ -95,7 +93,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		boolean found = false;
 		synchronized (clients) {
 			for (Client client : clients) {
-				if (client.uid == header.getUid()) {
+				if (client.handle.getUid() == header.getUid()) {
 					if (found) {
 						logger.error("ERROR! check error: there are several clients with the same uid, client:" + client);
 						if (sequrityCheck(header, client)) {
@@ -137,7 +135,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		ClientHandle result = null;
 		synchronized (clients) {
 			for (Client client : clients) {
-				if (header.getUid() == client.uid) {
+				if (header.getUid() == client.handle.getUid()) {
 					if (result != null) {
 						logger.error("ERROR! check error. There are two clients with the same uid");
 					}
@@ -164,7 +162,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	@Override
-	public ClientHandle[] getClients() {
+	public synchronized ClientHandle[] getClients() {
 		Client[] currentClients = clients.toArray(new Client[0]);
 		ClientHandle[] result = new ClientHandle[currentClients.length];
 		for (int i = 0; i < currentClients.length; i++) {
@@ -174,7 +172,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	@Override
-	public boolean send(ClientHandle handle, Message message) {
+	public synchronized boolean send(ClientHandle handle, Message message) {
 		logger.info("Send message to client:" + handle + " message:" + message);
 		try {
 			Socket socket = getSocket(handle);
@@ -215,23 +213,25 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		while (!isStopped) {
 			try {
 				Socket socket = serverSocket.accept();
-				InputStream in = socket.getInputStream();
-				Header header = mapper.readValue(in, Header.class);
-				// register client connection
-				if (innerCheckClient(socket, header)) {
-					Message message = mapper.readValue(in, Message.class);
-					boolean checkMessage = checkMessage(header, message);
-					AckStatus status;
-					if (checkMessage) {
-						status = getClient(header, socket).process(message);
+				synchronized (this) {
+					InputStream in = socket.getInputStream();
+					Header header = mapper.readValue(in, Header.class);
+					// register client connection
+					if (innerCheckClient(socket, header)) {
+						Message message = mapper.readValue(in, Message.class);
+						boolean checkMessage = checkMessage(header, message);
+						AckStatus status;
+						if (checkMessage) {
+							status = getClient(header, socket).process(message);
+						} else {
+							logger.info("Message rejected because of sum check with header:" + header);
+							status = AckStatus.DENIED_SUM_CHECK;
+						}
+						mapper.writeValue(socket.getOutputStream(), status);
 					} else {
-						logger.info("Message rejected because of sum check with header:" + header);
-						status = AckStatus.DENIED_SUM_CHECK;
+						logger.error("Unknown client or header: " + header + " socket:" + socket.getInetAddress().toString() + ":" + socket.getPort());
+						closeSocket(socket);
 					}
-					mapper.writeValue(socket.getOutputStream(), status);
-				} else {
-					logger.error("Unknown client or header: " + header + " socket:" + socket.getInetAddress().toString() + ":" + socket.getPort());
-					closeSocket(socket);
 				}
 			} catch (SocketException e) {
 				logger.info("Socket exception:", e);
@@ -243,7 +243,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	@Override
-	public void stop() {
+	public synchronized void stop() {
 		isStopped = true;
 		for (Client client : clients) {
 			closeSocket(client.socket);

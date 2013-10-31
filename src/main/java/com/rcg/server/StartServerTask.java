@@ -22,6 +22,8 @@ public class StartServerTask implements Task {
 	public void run() {
 		executor.start();
 		messageService.init(clientHandleManager);
+		clientHandleManager.setMessageService(messageService);
+		clientHandleManager.setTaskExecutor(executor);
 		messageService.open(PORT);
 	}
 

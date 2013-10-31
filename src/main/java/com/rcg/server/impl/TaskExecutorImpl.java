@@ -27,7 +27,9 @@ public class TaskExecutorImpl implements TaskExecutor {
 				while (!isStopped) {
 					try {
 						Task task = tasks.take();
+						logger.info("Strating task:" + task);
 						task.run();
+						logger.info("Ended task:" + task);
 					} catch (InterruptedException e) {
 						logger.error("InterruptedException in executor", e);
 					} catch (Throwable t) {

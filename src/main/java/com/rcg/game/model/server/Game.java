@@ -1,4 +1,4 @@
-package com.rcg.model.server;
+package com.rcg.game.model.server;
 
 public interface Game {
 

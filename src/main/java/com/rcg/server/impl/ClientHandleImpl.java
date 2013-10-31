@@ -38,7 +38,9 @@ public class ClientHandleImpl implements ClientHandle {
 	public AckStatus process(Message message) {
 		System.out.println("Message:" + message);
 		if (handler != null) {
-			handler.accept(message, this);
+			if (!handler.accept(message, this)) {
+				return AckStatus.UNEXPECTED_CLASS;
+			}
 		}
 		return AckStatus.OK;
 	}
@@ -56,6 +58,11 @@ public class ClientHandleImpl implements ClientHandle {
 	@Override
 	public int getPort() {
 		return port;
+	}
+	
+	@Override
+	public void updateUid(long uid) {
+		this.uid = uid;
 	}
 
 }
