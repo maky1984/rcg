@@ -32,7 +32,6 @@ public class ClientFXApplication extends Application {
 				if (task.isReady()) {
 					StartGameTask startGame = new StartGameTask();
 					startGame.setMessageService(task.getMessageService());
-					startGame.setClientHandleManager(task.getClientHandleManager());
 					taskExecutor.addTask(startGame);
 				} else {
 					statusLabel.setText("Initializing ... try again");

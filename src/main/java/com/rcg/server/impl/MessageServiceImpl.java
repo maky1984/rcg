@@ -6,11 +6,12 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
-import javax.xml.soap.MessageFactory;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,18 +23,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.ClientHandle.AckStatus;
-import com.rcg.server.api.ClientHandleManager;
 import com.rcg.server.api.Message;
+import com.rcg.server.api.MessageHandler;
 import com.rcg.server.api.MessageService;
 
 public class MessageServiceImpl implements MessageService, Runnable {
 
+	private static final long WAIT_READ_TIME = 500;
+	
 	private static final Logger logger = LoggerFactory.getLogger(MessageServiceImpl.class);
 
 	private List<Client> clients = Collections.synchronizedList(new ArrayList<Client>());
 
-	private ClientHandleManager clientHandleManager;
-
+	private MessageHandler defaultMessageHandler;
+	
 	public int port;
 	private ServerSocket serverSocket;
 	private ObjectMapper mapper;
@@ -49,39 +52,57 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	private static class Client {
 		ClientHandle handle;
 		Socket socket;
+		List<Message> messages;
 	}
 
-	private static Client createClient(ClientHandle handle, Header header, Socket socket) {
+	private static Client createClient(ClientHandle handle, Socket socket) {
+		logger.info("Creating new client handle=" + handle);
 		Client client = new Client();
 		client.handle = handle;
 		client.socket = socket;
+		client.messages = new ArrayList<Message>();
 		return client;
 	}
-
-	@Override
-	public void init(ClientHandleManager clientHandleManager) {
-		this.clientHandleManager = clientHandleManager;
+	
+	private ClientHandle getNewClientHandle(long uid) {
+		ClientHandle clientHandle = new ClientHandleImpl(uid);
+		clientHandle.setMessageHandler(defaultMessageHandler);
+		return clientHandle;
+	}
+	
+	public void setDefaultMessageHandler(MessageHandler defaultMessageHandler) {
+		this.defaultMessageHandler = defaultMessageHandler;
 	}
 
 	@Override
 	public synchronized void open(int port) {
-		if (clientHandleManager == null) {
-			logger.error("ERROR! Client handle manager not provided");
-		} else {
-			logger.info("Openning message server with PORT=" + port);
-			try {
-				serverSocket = new ServerSocket(port);
-				JsonFactory jsonFactory = new JsonFactory();
-				jsonFactory.disable(Feature.AUTO_CLOSE_SOURCE);
-				mapper = new ObjectMapper(jsonFactory);
-				mapper.enableDefaultTyping();
-				mapper.enable(SerializationFeature.FLUSH_AFTER_WRITE_VALUE);
-				mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-			} catch (IOException e) {
-				logger.error("Cant create socket");
-			}
-			new Thread(this, "MessageService-server").start();
+		logger.info("Openning message server with PORT=" + port);
+		try {
+			serverSocket = new ServerSocket(port);
+			JsonFactory jsonFactory = new JsonFactory();
+			jsonFactory.disable(Feature.AUTO_CLOSE_SOURCE);
+			mapper = new ObjectMapper(jsonFactory);
+			mapper.enableDefaultTyping();
+			mapper.enable(SerializationFeature.FLUSH_AFTER_WRITE_VALUE);
+			mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+		} catch (IOException e) {
+			logger.error("Cant create socket");
 		}
+		new Thread(this, "MessageService-server").start();
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				while (!isStopped) {
+					try {
+						readMessage();
+						Thread.sleep(WAIT_READ_TIME);
+					} catch (InterruptedException e) {
+						logger.error("ERRROR:", e);
+					}
+				}
+			}
+		}, "MessageService-read-write").start();
 	}
 
 	private boolean sequrityCheck(Header header, Client client) {
@@ -90,8 +111,8 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	private boolean innerCheckClient(Socket socket, Header header) {
-		boolean found = false;
 		synchronized (clients) {
+			boolean found = false;
 			for (Client client : clients) {
 				if (client.handle.getUid() == header.getUid()) {
 					if (found) {
@@ -103,6 +124,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 							logger.error("ERROR! Sequrity check fail for client = " + client + " and header = " + header);
 							closeSocket(client.socket);
 							clients.remove(client);
+							return false;
 						}
 					} else {
 						if (sequrityCheck(header, client)) {
@@ -110,55 +132,47 @@ public class MessageServiceImpl implements MessageService, Runnable {
 						} else {
 							logger.error("ERROR! Sequrity check fail for new client and header = " + header);
 							closeSocket(socket);
+							return false;
 						}
 					}
 				}
 			}
-			if (!found) {
-				ClientHandle handle = clientHandleManager.getClientHandle(header.getUid());
-				if (handle == null) {
-					logger.error("ERROR! Client not registered");
-				} else {
-					clients.add(createClient(handle, header, socket));
-					found = true;
-				}
-			}
 		}
-		return found;
+		return true;
 	}
 
 	private boolean checkMessage(Header header, Message message) {
 		return header.getMessageSize() == message.getSizeInBytes();
 	}
 
-	private ClientHandle getClient(Header header, Socket socket) {
-		ClientHandle result = null;
-		synchronized (clients) {
-			for (Client client : clients) {
-				if (header.getUid() == client.handle.getUid()) {
-					if (result != null) {
-						logger.error("ERROR! check error. There are two clients with the same uid");
-					}
-					result = client.handle;
-				}
-			}
-		}
-		return result;
-	}
-
-	private Socket getSocket(ClientHandle handle) {
-		Socket socket = null;
+	private Client getClient(ClientHandle handle) {
+		Client resClient = null;
 		synchronized (clients) {
 			for (Client client : clients) {
 				if (client.handle.equals(handle)) {
-					if (socket != null) {
+					if (resClient != null) {
 						logger.error("ERROR! check error. There are two clients with the same handle");
 					}
-					socket = client.socket;
+					resClient = client;
 				}
 			}
 		}
-		return socket;
+		return resClient;
+	}
+
+	private Client getClient(long uid) {
+		Client resClient = null;
+		synchronized (clients) {
+			for (Client client : clients) {
+				if (client.handle.getUid() == uid) {
+					if (resClient != null) {
+						logger.error("ERROR! check error. There are two clients with the same handle");
+					}
+					resClient = client;
+				}
+			}
+		}
+		return resClient;
 	}
 
 	@Override
@@ -171,26 +185,24 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		return result;
 	}
 
-	@Override
-	public synchronized boolean send(ClientHandle handle, Message message) {
-		logger.info("Send message to client:" + handle + " message:" + message);
+	public synchronized void send(ClientHandle handle, Message message) {
+		getClient(handle).messages.add(message);
+	}
+
+	private synchronized boolean send(Client client, Message message) {
+		logger.info("Send message to client:" + client.handle + " message:" + message);
 		try {
-			Socket socket = getSocket(handle);
-			if (socket == null) {
-				// Create socket
-				socket = new Socket(handle.getHost(), handle.getPort());
-				logger.info("Connected to the client:" + handle);
-				clients.add(createClient(handle, null, socket));
-			}
+			Socket socket = client.socket;
+			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();
-			Header header = createHeader(handle.getUid(), message.getSizeInBytes());
+			Header header = createHeader(client.handle.getUid(), message.getSizeInBytes());
 			mapper.writeValue(out, header);
 			System.out.println(mapper.writeValueAsString(header));
 			mapper.writeValue(out, message);
 			System.out.println(mapper.writeValueAsString(message));
-			AckStatus status = mapper.readValue(socket.getInputStream(), AckStatus.class);
+			AckStatus status = mapper.readValue(in, AckStatus.class);
 			if (status != AckStatus.OK) {
-				logger.error("Some error hapends during sending to client:" + handle);
+				logger.error("Some error hapends during sending to client:" + client.handle);
 			}
 			return status == AckStatus.OK;
 		} catch (IOException e) {
@@ -207,32 +219,69 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		}
 	}
 
+	private synchronized void readMessage(Client client, Socket socket) {
+		try {
+			InputStream in;
+			if (client == null) {
+				in = socket.getInputStream();
+			} else {
+				in = client.socket.getInputStream();
+			}
+			Header header = mapper.readValue(in, Header.class);
+			client = getClient(header.getUid());
+			if (client == null) {
+				addClientHandle(getNewClientHandle(header.getUid()), socket);
+				client = getClient(header.getUid());
+			}
+			System.out.println("ReadMessage:" + mapper.writeValueAsString(header));
+			// register client connection
+			if (innerCheckClient(client.socket, header)) {
+				Message message = mapper.readValue(in, Message.class);
+				System.out.println("ReadMessage:" + mapper.writeValueAsString(message));
+				boolean checkMessage = checkMessage(header, message);
+				AckStatus status;
+				if (checkMessage) {
+					status = client.handle.process(message);
+				} else {
+					logger.info("Message rejected because of sum check with header:" + header);
+					status = AckStatus.DENIED_SUM_CHECK;
+				}
+				mapper.writeValue(client.socket.getOutputStream(), status);
+			} else {
+				logger.error("Unknown client or header: " + header + " socket:" + client.socket.getInetAddress().toString() + ":" + client.socket.getPort());
+				closeSocket(client.socket);
+			}
+		} catch (IOException e) {
+			logger.error("Error during socket read/write", e);
+		}
+	}
+
+	private void readMessage() {
+		try {
+			for(Client client : clients) {
+				if (client.socket != null) {
+					InputStream in = client.socket.getInputStream();
+					if (in.available() > 0) {
+						readMessage(client, null);
+					}
+				}
+				for (Message message : client.messages) {
+					send(client, message);
+				}
+				client.messages.clear();
+			}
+		} catch (IOException e) {
+			logger.error("Error during readMessage", e);
+		}
+	}
+	
 	@Override
 	public void run() {
 		logger.info("Message server opened");
 		while (!isStopped) {
 			try {
-				Socket socket = serverSocket.accept();
-				synchronized (this) {
-					InputStream in = socket.getInputStream();
-					Header header = mapper.readValue(in, Header.class);
-					// register client connection
-					if (innerCheckClient(socket, header)) {
-						Message message = mapper.readValue(in, Message.class);
-						boolean checkMessage = checkMessage(header, message);
-						AckStatus status;
-						if (checkMessage) {
-							status = getClient(header, socket).process(message);
-						} else {
-							logger.info("Message rejected because of sum check with header:" + header);
-							status = AckStatus.DENIED_SUM_CHECK;
-						}
-						mapper.writeValue(socket.getOutputStream(), status);
-					} else {
-						logger.error("Unknown client or header: " + header + " socket:" + socket.getInetAddress().toString() + ":" + socket.getPort());
-						closeSocket(socket);
-					}
-				}
+				final Socket socket = serverSocket.accept();
+				readMessage(null, socket);
 			} catch (SocketException e) {
 				logger.info("Socket exception:", e);
 			} catch (IOException e) {
@@ -242,6 +291,20 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		logger.info("Message server stopped");
 	}
 
+	private synchronized void addClientHandle(ClientHandle clientHandle, Socket socket) {
+		clients.add(createClient(clientHandle, socket));
+	}
+
+	public synchronized void addClientHandle(ClientHandle clientHandle) {
+		try {
+			addClientHandle(clientHandle, new Socket(clientHandle.getHost(), clientHandle.getPort()));
+		} catch (UnknownHostException e) {
+			logger.error("addClientHandle error ", e);
+		} catch (IOException e) {
+			logger.error("addClientHandle error ", e);
+		}
+	}
+ 
 	@Override
 	public synchronized void stop() {
 		isStopped = true;
