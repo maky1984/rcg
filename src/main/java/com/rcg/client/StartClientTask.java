@@ -26,7 +26,7 @@ public class StartClientTask implements Task {
 	@Override
 	public void run() {
 		taskExecutor.start();
-		messageService.open(47778);
+		messageService.open(MessageService.PORT_UNDEFINED);
 		isReady = true;
 	}
 

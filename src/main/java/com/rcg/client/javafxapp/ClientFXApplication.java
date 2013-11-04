@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -23,7 +24,7 @@ public class ClientFXApplication extends Application {
 	
 	@Override
 	public void start(final Stage stage) throws Exception {
-		Pane group = new StackPane();
+		Pane group = new VBox();
 		Button bStart = new Button("Start game");
 		final Label statusLabel = new Label();
 		bStart.setOnAction(new EventHandler<ActionEvent>() {

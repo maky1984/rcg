@@ -76,19 +76,24 @@ public class MessageServiceImpl implements MessageService, Runnable {
 
 	@Override
 	public synchronized void open(int port) {
+		this.port = port;
 		logger.info("Openning message server with PORT=" + port);
 		try {
-			serverSocket = new ServerSocket(port);
+			if (port != PORT_UNDEFINED) {
+				serverSocket = new ServerSocket(port);
+			}
 			JsonFactory jsonFactory = new JsonFactory();
 			jsonFactory.disable(Feature.AUTO_CLOSE_SOURCE);
 			mapper = new ObjectMapper(jsonFactory);
 			mapper.enableDefaultTyping();
-			mapper.enable(SerializationFeature.FLUSH_AFTER_WRITE_VALUE);
+			mapper.disable(SerializationFeature.FLUSH_AFTER_WRITE_VALUE);
 			mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		} catch (IOException e) {
 			logger.error("Cant create socket");
 		}
-		new Thread(this, "MessageService-server").start();
+		if (port != PORT_UNDEFINED) {
+			new Thread(this, "MessageService-server").start();
+		}
 		new Thread(new Runnable() {
 			
 			@Override
@@ -192,19 +197,26 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	private synchronized boolean send(Client client, Message message) {
 		logger.info("Send message to client:" + client.handle + " message:" + message);
 		try {
-			Socket socket = client.socket;
-			InputStream in = socket.getInputStream();
-			OutputStream out = socket.getOutputStream();
+			InputStream in = client.socket.getInputStream();
+			OutputStream out = client.socket.getOutputStream();
 			Header header = createHeader(client.handle.getUid(), message.getSizeInBytes());
 			mapper.writeValue(out, header);
+			out.flush();
 			System.out.println(mapper.writeValueAsString(header));
-			mapper.writeValue(out, message);
-			System.out.println(mapper.writeValueAsString(message));
-			AckStatus status = mapper.readValue(in, AckStatus.class);
-			if (status != AckStatus.OK) {
-				logger.error("Some error hapends during sending to client:" + client.handle);
+			if (mapper.readValue(in, AckStatus.class) == AckStatus.OK) {
+				System.out.println("Reading:AckStatus:OK");
+				mapper.writeValue(out, message);
+				out.flush();
+				System.out.println(mapper.writeValueAsString(message));
+				AckStatus status = AckStatus.OK; 
+				status = mapper.readValue(in, AckStatus.class);
+				if (status != AckStatus.OK) {
+					logger.error("Some error hapends during sending to client:" + client.handle);
+				}
+				return status == AckStatus.OK;
+			} else {
+				logger.error("Error writing header to client:" + client);
 			}
-			return status == AckStatus.OK;
 		} catch (IOException e) {
 			logger.error("Sending message error: ", e);
 		}
@@ -221,18 +233,15 @@ public class MessageServiceImpl implements MessageService, Runnable {
 
 	private synchronized void readMessage(Client client, Socket socket) {
 		try {
-			InputStream in;
-			if (client == null) {
-				in = socket.getInputStream();
-			} else {
-				in = client.socket.getInputStream();
-			}
+			InputStream in = client.socket.getInputStream();
+			OutputStream out = client.socket.getOutputStream();
 			Header header = mapper.readValue(in, Header.class);
-			client = getClient(header.getUid());
-			if (client == null) {
-				addClientHandle(getNewClientHandle(header.getUid()), socket);
-				client = getClient(header.getUid());
+			if (client.handle == null) {
+				logger.info("Adding new client handle fro client: " + client);
+				client.handle = getNewClientHandle(header.getUid());
 			}
+			mapper.writeValue(out, AckStatus.OK);
+			out.flush();
 			System.out.println("ReadMessage:" + mapper.writeValueAsString(header));
 			// register client connection
 			if (innerCheckClient(client.socket, header)) {
@@ -246,7 +255,8 @@ public class MessageServiceImpl implements MessageService, Runnable {
 					logger.info("Message rejected because of sum check with header:" + header);
 					status = AckStatus.DENIED_SUM_CHECK;
 				}
-				mapper.writeValue(client.socket.getOutputStream(), status);
+				mapper.writeValue(out, status);
+				out.flush();
 			} else {
 				logger.error("Unknown client or header: " + header + " socket:" + client.socket.getInetAddress().toString() + ":" + client.socket.getPort());
 				closeSocket(client.socket);
@@ -256,7 +266,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		}
 	}
 
-	private void readMessage() {
+	private synchronized void readMessage() {
 		try {
 			for(Client client : clients) {
 				if (client.socket != null) {
@@ -281,7 +291,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		while (!isStopped) {
 			try {
 				final Socket socket = serverSocket.accept();
-				readMessage(null, socket);
+				addClientHandle(null, socket);
 			} catch (SocketException e) {
 				logger.info("Socket exception:", e);
 			} catch (IOException e) {
@@ -311,10 +321,12 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		for (Client client : clients) {
 			closeSocket(client.socket);
 		}
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			logger.error("Closing server socket error ", e);
+		if (port != PORT_UNDEFINED) {
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				logger.error("Closing server socket error ", e);
+			}
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package com.rcg.server;
 
+import com.rcg.common.RegisterClientHandleRequest;
+import com.rcg.common.RegisterClientHandleResponse;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -24,6 +26,11 @@ public class StartServerTask implements Task {
 			@Override
 			public boolean accept(Message message, ClientHandle caller) {
 				System.out.println("From new client received: " + message);
+				RegisterClientHandleRequest request = message.unpackMessage();
+				System.out.println("From request:" + request.getMsg());
+				RegisterClientHandleResponse response = new RegisterClientHandleResponse();
+				response.setStatus("OK");
+				messageService.send(caller, new Message(response));
 				return true;
 			}
 		});

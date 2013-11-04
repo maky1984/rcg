@@ -2,14 +2,14 @@ package com.rcg.common;
 
 public class RegisterClientHandleResponse {
 
-	private long uid;
+	private String status;
 	
-	public long getUid() {
-		return uid;
+	public void setStatus(String status) {
+		this.status = status;
 	}
 	
-	public void setUid(long uid) {
-		this.uid = uid;
+	public String getStatus() {
+		return status;
 	}
 	
 }
