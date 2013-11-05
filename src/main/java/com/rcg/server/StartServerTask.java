@@ -1,7 +1,21 @@
 package com.rcg.server;
 
-import com.rcg.common.RegisterClientHandleRequest;
-import com.rcg.common.RegisterClientHandleResponse;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.rcg.common.ClientRequest;
+import com.rcg.common.GameView;
+import com.rcg.common.RequestCreateGame;
+import com.rcg.common.RequestGameList;
+import com.rcg.common.RequestRegisterClientHandle;
+import com.rcg.common.ResponseConnectToGame;
+import com.rcg.common.ResponseGameList;
+import com.rcg.common.ResponseRegisterClientHandle;
+import com.rcg.game.model.server.Game;
+import com.rcg.game.model.server.GameClub;
+import com.rcg.game.model.server.Player;
+import com.rcg.game.model.server.impl.GameClubImpl;
+import com.rcg.game.model.server.impl.PlayerImpl;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -11,13 +25,43 @@ import com.rcg.server.api.TaskExecutor;
 import com.rcg.server.impl.MessageServiceImpl;
 import com.rcg.server.impl.TaskExecutorImpl;
 
-public class StartServerTask implements Task {
+public class StartServerTask implements Task, MessageHandler {
 
 	public static final int PORT = 47777;
 
 	private TaskExecutor executor = new TaskExecutorImpl();
 
 	private MessageService messageService = new MessageServiceImpl();
+	
+	private GameClub gameClub = new GameClubImpl();
+
+	@Override
+	public boolean accept(Message message, ClientHandle caller) {
+		if (message.getClassName().equals(RequestGameList.class.getName())) {
+			RequestGameList request = message.unpackMessage();
+			List<Game> games = gameClub.getGames();
+			ResponseGameList response = new ResponseGameList();
+			List<GameView> views = new ArrayList<>();
+			for (Game game : games) {
+				GameView view = new GameView();
+				view.setId(game.getId());
+				view.setName(game.getName());
+				views.add(view);
+			}
+			response.setGames(views);
+			messageService.send(caller, new Message(response));
+		} else if (message.getClassName().equals(RequestCreateGame.class.getName())) {
+			RequestCreateGame request = message.unpackMessage();
+			Player player = new PlayerImpl(request.getName(), caller);
+			Game game = gameClub.addGame(player);
+			ResponseConnectToGame response = new ResponseConnectToGame();
+			response.setGameId(game.getId());
+			response.setGameName(game.getName());
+			response.setPlayer1Name(player.getName());
+			messageService.send(caller, new Message(response));
+		}
+		return true;
+	}
 
 	@Override
 	public void run() {
@@ -26,11 +70,13 @@ public class StartServerTask implements Task {
 			@Override
 			public boolean accept(Message message, ClientHandle caller) {
 				System.out.println("From new client received: " + message);
-				RegisterClientHandleRequest request = message.unpackMessage();
+				RequestRegisterClientHandle request = message.unpackMessage();
 				System.out.println("From request:" + request.getMsg());
-				RegisterClientHandleResponse response = new RegisterClientHandleResponse();
+				ResponseRegisterClientHandle response = new ResponseRegisterClientHandle();
 				response.setStatus("OK");
 				messageService.send(caller, new Message(response));
+				caller.removeMessageHandler(this);
+				caller.addMessageHandler(StartServerTask.this);
 				return true;
 			}
 		});

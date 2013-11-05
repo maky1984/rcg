@@ -1,5 +1,7 @@
 package com.rcg.game.model.server.impl;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,7 @@ public class GameImpl implements Game, MessageHandler {
 	private MessageService messageService;
 	private TaskExecutor taskExecutor;
 	
+	private long id;
 	private Player player1;
 	private Player player2;
 	
@@ -46,15 +49,22 @@ public class GameImpl implements Game, MessageHandler {
 	}
 	
 	@Override
+	public long getId() {
+		return id;
+	}
+	
+	@Override
+	public String getName() {
+		String name1 = player1 == null ? "NULL" : player1.getName();
+		String name2 = player2 == null ? "NULL" : player2.getName();
+		return name1 + " vs " + name2;
+	}
+	
+	@Override
 	public void open() {
-		Task initTask = new Task() {
-			@Override
-			public void run() {
-				// check all preconditions
-				updateState(ServerInnerState.WAIT_PLAYER1);
-			}
-		};
-		taskExecutor.addTask(initTask);
+		id = UUID.randomUUID().getMostSignificantBits();
+		// check all preconditions
+		updateState(ServerInnerState.WAIT_PLAYER1);
 	}
 	
 	private void drawCards() {
@@ -73,11 +83,11 @@ public class GameImpl implements Game, MessageHandler {
 	public void add(Player player) {
 		if ( state == ServerInnerState.WAIT_PLAYER1 ) {
 			player1 = player;
-			player1.getClientHandle().setMessageHandler(this);
+			player1.getClientHandle().addMessageHandler(this);
 			updateState(ServerInnerState.WAIT_PLAYER2);
 		} else if (state == ServerInnerState.WAIT_PLAYER2) {
 			player2 = player;
-			player2.getClientHandle().setMessageHandler(this);
+			player2.getClientHandle().addMessageHandler(this);
 			drawCards();
 		} else {
 			logger.error("ERROR Cant add more players to the game");

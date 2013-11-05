@@ -30,6 +30,7 @@ public class Message {
 			className = obj.getClass().getName();
 			ObjectMapper mapper = new ObjectMapper();
 			data = mapper.writeValueAsBytes(obj);
+			logger.info("fillMessage:" + mapper.writeValueAsString(obj));
 		} catch (JsonProcessingException e) {
 			logger.error("ERROR. Cant fill message", e);
 		}
@@ -45,7 +46,9 @@ public class Message {
 		try {
 			Class<T> cls = (Class<T>) Class.forName(getClassName());
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readValue(data, cls);
+			T t = mapper.readValue(data, cls);
+			logger.info("unpackMessage:" + t);
+			return t;
 		} catch (IOException e) {
 			logger.error("ERROR. Cant read message", e);
 		} catch (ClassNotFoundException e) {

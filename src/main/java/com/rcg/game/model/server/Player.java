@@ -5,6 +5,8 @@ import com.rcg.server.api.ClientHandle;
 
 public interface Player {
 
+	public String getName();
+	
 	public ClientHandle getClientHandle();
 	
 	public Deck getDeck();

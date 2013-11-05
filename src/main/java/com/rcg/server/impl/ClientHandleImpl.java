@@ -1,12 +1,15 @@
 package com.rcg.server.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
 
 public class ClientHandleImpl implements ClientHandle {
 
-	private MessageHandler handler;
+	private List<MessageHandler> handlers = new ArrayList<>();
 	
 	boolean isFull;
 	private long uid;
@@ -30,19 +33,24 @@ public class ClientHandleImpl implements ClientHandle {
 	}
 
 	@Override
-	public void setMessageHandler(MessageHandler messageHandler) {
-		handler = messageHandler;
+	public void addMessageHandler(MessageHandler messageHandler) {
+		handlers.add(messageHandler);
+	}
+	
+	@Override
+	public void removeMessageHandler(MessageHandler messageHandler) {
+		handlers.remove(messageHandler);
 	}
 	
 	@Override
 	public AckStatus process(Message message) {
 		System.out.println("Message:" + message);
-		if (handler != null) {
-			if (!handler.accept(message, this)) {
-				return AckStatus.UNEXPECTED_CLASS;
+		for (MessageHandler handler : handlers) {
+			if (handler.accept(message, this)) {
+				return AckStatus.OK;
 			}
 		}
-		return AckStatus.OK;
+		return AckStatus.UNEXPECTED_CLASS;
 	}
 
 	@Override

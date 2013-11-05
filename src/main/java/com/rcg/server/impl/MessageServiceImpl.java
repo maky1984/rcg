@@ -9,20 +9,18 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rcg.server.api.ClientHandle;
-import com.rcg.server.api.ClientHandle.AckStatus;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
 import com.rcg.server.api.MessageService;
@@ -52,7 +50,12 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	private static class Client {
 		ClientHandle handle;
 		Socket socket;
+		JsonParser parser;
 		List<Message> messages;
+		@Override
+		public String toString() {
+			return "Uid:" + (handle == null ? "NULL" : handle.getUid()) + " socket:" + (socket == null ? "NULL" : socket.toString());
+		}
 	}
 
 	private static Client createClient(ClientHandle handle, Socket socket) {
@@ -66,7 +69,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	
 	private ClientHandle getNewClientHandle(long uid) {
 		ClientHandle clientHandle = new ClientHandleImpl(uid);
-		clientHandle.setMessageHandler(defaultMessageHandler);
+		clientHandle.addMessageHandler(defaultMessageHandler);
 		return clientHandle;
 	}
 	
@@ -88,6 +91,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 			mapper.enableDefaultTyping();
 			mapper.disable(SerializationFeature.FLUSH_AFTER_WRITE_VALUE);
 			mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+			mapper.configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false);
 		} catch (IOException e) {
 			logger.error("Cant create socket");
 		}
@@ -123,11 +127,11 @@ public class MessageServiceImpl implements MessageService, Runnable {
 					if (found) {
 						logger.error("ERROR! check error: there are several clients with the same uid, client:" + client);
 						if (sequrityCheck(header, client)) {
-							closeSocket(client.socket);
+							closeClient(client);
 							client.socket = socket;
 						} else {
 							logger.error("ERROR! Sequrity check fail for client = " + client + " and header = " + header);
-							closeSocket(client.socket);
+							closeClient(client);
 							clients.remove(client);
 							return false;
 						}
@@ -136,7 +140,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 							found = true;
 						} else {
 							logger.error("ERROR! Sequrity check fail for new client and header = " + header);
-							closeSocket(socket);
+							closeClient(client);
 							return false;
 						}
 					}
@@ -197,30 +201,31 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	private synchronized boolean send(Client client, Message message) {
 		logger.info("Send message to client:" + client.handle + " message:" + message);
 		try {
-			InputStream in = client.socket.getInputStream();
 			OutputStream out = client.socket.getOutputStream();
 			Header header = createHeader(client.handle.getUid(), message.getSizeInBytes());
 			mapper.writeValue(out, header);
-			out.flush();
 			System.out.println(mapper.writeValueAsString(header));
-			if (mapper.readValue(in, AckStatus.class) == AckStatus.OK) {
-				System.out.println("Reading:AckStatus:OK");
-				mapper.writeValue(out, message);
-				out.flush();
-				System.out.println(mapper.writeValueAsString(message));
-				AckStatus status = AckStatus.OK; 
-				status = mapper.readValue(in, AckStatus.class);
-				if (status != AckStatus.OK) {
-					logger.error("Some error hapends during sending to client:" + client.handle);
-				}
-				return status == AckStatus.OK;
-			} else {
-				logger.error("Error writing header to client:" + client);
-			}
+			mapper.writeValue(out, message);
+			out.flush();
+			System.out.println(mapper.writeValueAsString(message));
+			return true;
 		} catch (IOException e) {
 			logger.error("Sending message error: ", e);
 		}
 		return false;
+	}
+
+	private void closeClient(Client client) {
+		try {
+			if (client.parser != null) {
+				client.parser.close();
+				client.parser = null;
+			}
+			closeSocket(client.socket);
+			client.socket = null;
+		} catch (IOException e) {
+			logger.error("Closing parser error: ", e);
+		}
 	}
 
 	private void closeSocket(Socket socket) {
@@ -233,33 +238,29 @@ public class MessageServiceImpl implements MessageService, Runnable {
 
 	private synchronized void readMessage(Client client, Socket socket) {
 		try {
-			InputStream in = client.socket.getInputStream();
-			OutputStream out = client.socket.getOutputStream();
-			Header header = mapper.readValue(in, Header.class);
+			if (client.parser == null) {
+				InputStream in = client.socket.getInputStream();
+				client.parser = mapper.getFactory().createParser(in);
+			}
+			Header header = client.parser.readValueAs(Header.class);
 			if (client.handle == null) {
 				logger.info("Adding new client handle fro client: " + client);
 				client.handle = getNewClientHandle(header.getUid());
 			}
-			mapper.writeValue(out, AckStatus.OK);
-			out.flush();
 			System.out.println("ReadMessage:" + mapper.writeValueAsString(header));
 			// register client connection
 			if (innerCheckClient(client.socket, header)) {
-				Message message = mapper.readValue(in, Message.class);
+				Message message = client.parser.readValueAs(Message.class);
 				System.out.println("ReadMessage:" + mapper.writeValueAsString(message));
 				boolean checkMessage = checkMessage(header, message);
-				AckStatus status;
 				if (checkMessage) {
-					status = client.handle.process(message);
+					client.handle.process(message);
 				} else {
 					logger.info("Message rejected because of sum check with header:" + header);
-					status = AckStatus.DENIED_SUM_CHECK;
 				}
-				mapper.writeValue(out, status);
-				out.flush();
 			} else {
 				logger.error("Unknown client or header: " + header + " socket:" + client.socket.getInetAddress().toString() + ":" + client.socket.getPort());
-				closeSocket(client.socket);
+				closeClient(client);
 			}
 		} catch (IOException e) {
 			logger.error("Error during socket read/write", e);
@@ -271,7 +272,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 			for(Client client : clients) {
 				if (client.socket != null) {
 					InputStream in = client.socket.getInputStream();
-					if (in.available() > 0) {
+					while (in.available() > 0) {
 						readMessage(client, null);
 					}
 				}
@@ -302,6 +303,10 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	}
 
 	private synchronized void addClientHandle(ClientHandle clientHandle, Socket socket) {
+		logger.info("Clients dump (" + clients.size() + "):");
+		for (Client client : clients) {
+			logger.info("Client: " + client);
+		}
 		clients.add(createClient(clientHandle, socket));
 	}
 
@@ -319,7 +324,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 	public synchronized void stop() {
 		isStopped = true;
 		for (Client client : clients) {
-			closeSocket(client.socket);
+			closeClient(client);
 		}
 		if (port != PORT_UNDEFINED) {
 			try {

@@ -1,6 +1,6 @@
 package com.rcg.common;
 
-public class RegisterClientHandleResponse {
+public class ResponseRegisterClientHandle extends ClientResponse {
 
 	private String status;
 	
