@@ -7,12 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import com.rcg.client.javafxapp.ClientFXApplication;
 import com.rcg.common.ClientResponse;
-import com.rcg.common.RequestCreateGame;
+import com.rcg.common.RequestConnectToGame;
 import com.rcg.common.RequestGameList;
 import com.rcg.common.RequestRegisterClientHandle;
 import com.rcg.common.ResponseConnectToGame;
 import com.rcg.common.ResponseGameList;
 import com.rcg.common.ResponseRegisterClientHandle;
+import com.rcg.common.ResponseUnknownPlayer;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -67,10 +68,14 @@ public class StartGameTask implements Task, MessageHandler {
 		} else if (message.getClassName().equals(ResponseConnectToGame.class.getName())) {
 			ResponseConnectToGame response = message.unpackMessage();
 			if (response.getPlayer1Name() != null && response.getPlayer2Name() != null) {
+				executor.removeTask(updateGameListTask);
 				app.startGameProcess(response.getGameName(), response.getGameId());
 			} else {
 				app.updateWaitForPlayer(response.getGameName(), response.getGameId());
 			}
+		} else if (message.getClassName().equals(ResponseUnknownPlayer.class.getName())) {
+			ResponseUnknownPlayer response = message.unpackMessage();
+			app.updateUnknownPlayer(response.getStatus());
 		}
 		return true;
 	}
@@ -102,13 +107,19 @@ public class StartGameTask implements Task, MessageHandler {
 	}
 
 	public void startGame() {
-		RequestCreateGame request = new RequestCreateGame();
+		RequestConnectToGame request = new RequestConnectToGame();
+		request.setCreateNewGame(true);
 		request.setPlayerName(app.getPlayerName());
+		request.setPlayerId(app.getPlayerId());
 		messageService.send(getClientHandle(), new Message(request));
 	}
 
 	public void connectToGame(long id) {
-		// TODO
+		RequestConnectToGame request = new RequestConnectToGame();
+		request.setGameId(id);
+		request.setPlayerName(app.getPlayerName());
+		request.setPlayerId(app.getPlayerId());
+		messageService.send(getClientHandle(), new Message(request));
 	}
 	
 }

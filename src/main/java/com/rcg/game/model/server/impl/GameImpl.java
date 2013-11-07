@@ -69,8 +69,8 @@ public class GameImpl implements Game, MessageHandler {
 	
 	private void drawCards() {
 		updateState(ServerInnerState.DRAW_CARDS);
-		player1.fillHand(player1.getDeck());
-		player2.fillHand(player2.getDeck());
+		player1.fillHand(player1.getCurrentDeck());
+		player2.fillHand(player2.getCurrentDeck());
 		sendGameState();
 		updateState(ServerInnerState.WAIT_CARD_FROM_1);
 	}

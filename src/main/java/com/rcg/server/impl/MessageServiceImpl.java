@@ -123,7 +123,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		synchronized (clients) {
 			boolean found = false;
 			for (Client client : clients) {
-				if (client.handle.getUid() == header.getUid()) {
+				if (client.handle != null && client.handle.getUid() == header.getUid()) {
 					if (found) {
 						logger.error("ERROR! check error: there are several clients with the same uid, client:" + client);
 						if (sequrityCheck(header, client)) {
@@ -244,7 +244,7 @@ public class MessageServiceImpl implements MessageService, Runnable {
 			}
 			Header header = client.parser.readValueAs(Header.class);
 			if (client.handle == null) {
-				logger.info("Adding new client handle fro client: " + client);
+				logger.info("Adding new client handle for client: " + client);
 				client.handle = getNewClientHandle(header.getUid());
 			}
 			System.out.println("ReadMessage:" + mapper.writeValueAsString(header));

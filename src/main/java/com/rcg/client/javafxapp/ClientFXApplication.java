@@ -31,6 +31,7 @@ public class ClientFXApplication extends Application {
 	private Pane group = new VBox();
 
 	private TextField tPlayerName = new TextField("Player name");
+	private TextField tPlayerId = new TextField("1");
 	private Button bConnect = new Button("Connect to server");
 	private Button bNewGame = new Button("Start new game");
 	private Label lWaitPlayer = new Label();
@@ -86,6 +87,7 @@ public class ClientFXApplication extends Application {
 				group.getChildren().clear();
 				gameList.getChildren().clear();
 				group.getChildren().add(tPlayerName);
+				group.getChildren().add(tPlayerId);
 				group.getChildren().add(bNewGame);
 				group.getChildren().add(lWaitPlayer);
 				group.getChildren().add(gameList);
@@ -101,9 +103,9 @@ public class ClientFXApplication extends Application {
 					button.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent arg0) {
-							System.out.println(arg0.getSource());
-							System.out.println(arg0.getTarget());
-							startGameTask.connectToGame(123);
+							long gameId = ((GameView)((Button)arg0.getSource()).getUserData()).getId();
+							System.out.println("Connecting to game with id:" + gameId);
+							startGameTask.connectToGame(gameId);
 						}
 					});
 					gameList.getChildren().add(button);
@@ -119,9 +121,20 @@ public class ClientFXApplication extends Application {
 	public String getPlayerName() {
 		return tPlayerName.getText();
 	}
+	
+	public long getPlayerId() {
+		return Long.parseLong(tPlayerId.getText());
+	}
 
 	public void startGameProcess(String gameName, long gameId) {
-		// TODO
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				group.getChildren().clear();
+				gameList.getChildren().clear();
+				
+			}
+		});
 	}
 
 	public void updateWaitForPlayer(final String gameName, final long gameId) {
@@ -131,5 +144,10 @@ public class ClientFXApplication extends Application {
 				lWaitPlayer.setText("Wait for player GameName:" + gameName + " gameId:" + gameId);
 			}
 		});
+	}
+
+	public void updateUnknownPlayer(String status) {
+		// TODO Auto-generated method stub
+		System.out.println("Unknown player");
 	}
 }

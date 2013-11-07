@@ -4,17 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.rcg.common.ClientRequest;
+import com.rcg.common.ClientResponse;
 import com.rcg.common.GameView;
-import com.rcg.common.RequestCreateGame;
+import com.rcg.common.RequestConnectToGame;
 import com.rcg.common.RequestGameList;
 import com.rcg.common.RequestRegisterClientHandle;
 import com.rcg.common.ResponseConnectToGame;
 import com.rcg.common.ResponseGameList;
 import com.rcg.common.ResponseRegisterClientHandle;
+import com.rcg.common.ResponseUnknownPlayer;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.GameClub;
 import com.rcg.game.model.server.Player;
+import com.rcg.game.model.server.PlayerBase;
 import com.rcg.game.model.server.impl.GameClubImpl;
+import com.rcg.game.model.server.impl.PlayerBaseImpl;
 import com.rcg.game.model.server.impl.PlayerImpl;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
@@ -34,6 +38,8 @@ public class StartServerTask implements Task, MessageHandler {
 	private MessageService messageService = new MessageServiceImpl();
 	
 	private GameClub gameClub = new GameClubImpl();
+	
+	private PlayerBase playerBase = new PlayerBaseImpl();
 
 	@Override
 	public boolean accept(Message message, ClientHandle caller) {
@@ -50,14 +56,26 @@ public class StartServerTask implements Task, MessageHandler {
 			}
 			response.setGames(views);
 			messageService.send(caller, new Message(response));
-		} else if (message.getClassName().equals(RequestCreateGame.class.getName())) {
-			RequestCreateGame request = message.unpackMessage();
-			Player player = new PlayerImpl(request.getName(), caller);
-			Game game = gameClub.addGame(player);
-			ResponseConnectToGame response = new ResponseConnectToGame();
-			response.setGameId(game.getId());
-			response.setGameName(game.getName());
-			response.setPlayer1Name(player.getName());
+		} else if (message.getClassName().equals(RequestConnectToGame.class.getName())) {
+			RequestConnectToGame request = message.unpackMessage();
+			Player player = playerBase.getPlayerById(request.getPlayerId());
+			ClientResponse response;
+			if (player == null) {
+				// Player not registered
+				ResponseUnknownPlayer unknownResponse = new ResponseUnknownPlayer();
+				unknownResponse.setName(request.getName());
+				unknownResponse.setPlayerId(request.getPlayerId());
+				unknownResponse.setStatus("Unknown player. Cant find this player in registered player base");
+				response = unknownResponse;
+			} else {
+				player.setClientHandle(caller);
+				Game game = gameClub.addGame(player);
+				ResponseConnectToGame connectResponse = new ResponseConnectToGame();
+				connectResponse.setGameId(game.getId());
+				connectResponse.setGameName(game.getName());
+				connectResponse.setPlayer1Name(player.getName());
+				response = connectResponse;
+			}
 			messageService.send(caller, new Message(response));
 		}
 		return true;
