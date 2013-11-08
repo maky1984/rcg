@@ -76,7 +76,7 @@ public class GameImpl implements Game, MessageHandler {
 	}
 	
 	private void sendGameState() {
-		
+		// TODO
 	}
 
 	@Override

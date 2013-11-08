@@ -85,37 +85,40 @@ public class PlayerBaseImpl implements PlayerBase {
 	}
 
 	private void readPlayers() {
+		players = new HashMap<Long, Player>();
 		try {
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(new File(filename));
-			// optional, but recommended
-			// read this -
-			// http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-			doc.getDocumentElement().normalize();
-			System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-			NodeList nodes = doc.getElementsByTagName(TAG_PLAYER);
-			players = new HashMap<Long, Player>();
-			for (int i = 0; i < nodes.getLength(); i++) {
-				Node node = nodes.item(i);
-				System.out.println("Current Element :" + node.getNodeName());
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					Element element = (Element) node;
-					long id = Long.parseLong(element.getElementsByTagName(TAG_PLAYER_ID).item(0).getTextContent());
-					String name = element.getElementsByTagName(TAG_PLAYER_NAME).item(0).getTextContent();
-					NodeList cards = element.getElementsByTagName(TAG_PLAYER_CARDS);
-					List<Long> cardIds = new ArrayList<>();
-					for (int j = 0; j < cards.getLength(); j++) {
-						Node cardNode = cards.item(j);
-						if (cardNode.getNodeType() == Node.ELEMENT_NODE) {
-							Element cardEl = (Element) cardNode;
-							Long cardId = new Long(cardEl.getElementsByTagName(TAG_PLAYER_CARDS_ID).item(0).getTextContent());
-							cardIds.add(cardId);
+			File file = new File(filename);
+			if (file.exists()) {
+				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+				Document doc = dBuilder.parse(file);
+				// optional, but recommended
+				// read this -
+				// http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+				doc.getDocumentElement().normalize();
+				System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+				NodeList nodes = doc.getElementsByTagName(TAG_PLAYER);
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					System.out.println("Current Element :" + node.getNodeName());
+					if (node.getNodeType() == Node.ELEMENT_NODE) {
+						Element element = (Element) node;
+						long id = Long.parseLong(element.getElementsByTagName(TAG_PLAYER_ID).item(0).getTextContent());
+						String name = element.getElementsByTagName(TAG_PLAYER_NAME).item(0).getTextContent();
+						NodeList cards = ((Element)element.getElementsByTagName(TAG_PLAYER_CARDS).item(0)).getElementsByTagName(TAG_PLAYER_CARDS_ID);
+						List<Long> cardIds = new ArrayList<>();
+						for (int j = 0; j < cards.getLength(); j++) {
+							Node cardNode = cards.item(j);
+							if (cardNode.getNodeType() == Node.ELEMENT_NODE) {
+								Element cardEl = (Element) cardNode;
+								Long cardId = new Long(cardEl.getTextContent());
+								cardIds.add(cardId);
+							}
 						}
+						System.out.println("Player id:" + id + " name:" + name);
+						Player player = createPlayer(id, name, cardIds);
+						players.put(id, player);
 					}
-					System.out.println("Player id:" + id + " name:" + name);
-					Player player = createPlayer(id, name, cardIds);
-					players.put(id, player);
 				}
 			}
 		} catch (Exception e) {

@@ -1,39 +1,54 @@
-package com.rcg.game.model;
+package com.rcg.game.model.impl;
 
 import java.util.List;
 
+import com.rcg.game.model.Card;
+
+
 public class PlayerState {
 
-	private int bricks, gems, recruits, quarry, magic, dungeon, wall, tower;
+	private int bricks, gems, recruiters, quarry, magic, dungeon, wall, tower;
 	private List<Card> hand;
 	private boolean hasTurn;
+
+	/**
+	 * Quarry generates bricks
+	 * @return
+	 */
+	public int getQuarry() {
+		return quarry;
+	}
+
+	/**
+	 * Magic generates gems
+	 * @return
+	 */
+	public int getMagic() {
+		return magic;
+	}
+
+	/**
+	 * Dungeon generates recruiters
+	 * @return
+	 */
+	public int getDungeon() {
+		return dungeon;
+	}
+
+	public List<Card> getHand() {
+		return hand;
+	}
 
 	public int getBricks() {
 		return bricks;
 	}
 	
-	public int getDungeon() {
-		return dungeon;
-	}
-	
 	public int getGems() {
 		return gems;
-	}
+	}	
 	
-	public List<Card> getHand() {
-		return hand;
-	}
-	
-	public int getMagic() {
-		return magic;
-	}
-	
-	public int getQuarry() {
-		return quarry;
-	}
-	
-	public int getRecruits() {
-		return recruits;
+	public int getRecruiters() {
+		return recruiters;
 	}
 	
 	public int getTower() {
@@ -76,8 +91,8 @@ public class PlayerState {
 		this.quarry = quarry;
 	}
 	
-	public void setRecruits(int recruits) {
-		this.recruits = recruits;
+	public void setRecruiters(int recruiters) {
+		this.recruiters = recruiters;
 	}
 	
 	public void setTower(int tower) {
