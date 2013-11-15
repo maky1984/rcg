@@ -18,10 +18,11 @@ public class PlayerImpl implements Player {
 	private Deck deck;
 	private ClientHandle handle;
 
-	public PlayerImpl(long id, String name, List<Long> allCardIds) {
+	public PlayerImpl(long id, String name, List<Long> allCardIds, List<Long> allDeckIds) {
 		this.id = id;
 		this.name = name;
 		this.allCardIds = allCardIds;
+		this.allDeckIds = allDeckIds;
 	}
 
 	@Override

@@ -78,6 +78,12 @@ public class CardBaseImpl implements CardBase {
 	}
 
 	@Override
+	public void updateCard(Card card) {
+		cards.put(card.getId(), card);
+		writeCards();
+	}
+
+	@Override
 	public void addCard(Card... cards) {
 		for (Card card : cards) {
 			this.cards.put(card.getId(), card);

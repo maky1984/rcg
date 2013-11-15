@@ -13,6 +13,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -35,11 +38,15 @@ public class ClientFXApplication extends Application {
 	private Button bConnect = new Button("Connect to server");
 	private Button bNewGame = new Button("Start new game");
 	private Label lWaitPlayer = new Label();
-	private Pane gameList = new HBox();;
+	private Pane gameList = new HBox();
+	private Popup popup;
+	private Stage stage;
 
 	@Override
 	public void start(final Stage stage) throws Exception {
+		this.stage = stage;
 		final Label statusLabel = new Label();
+		popup = new Popup();
 		bConnect.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -103,7 +110,7 @@ public class ClientFXApplication extends Application {
 					button.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent arg0) {
-							long gameId = ((GameView)((Button)arg0.getSource()).getUserData()).getId();
+							long gameId = ((GameView) ((Button) arg0.getSource()).getUserData()).getId();
 							System.out.println("Connecting to game with id:" + gameId);
 							startGameTask.connectToGame(gameId);
 						}
@@ -121,7 +128,7 @@ public class ClientFXApplication extends Application {
 	public String getPlayerName() {
 		return tPlayerName.getText();
 	}
-	
+
 	public long getPlayerId() {
 		return Long.parseLong(tPlayerId.getText());
 	}
@@ -132,7 +139,7 @@ public class ClientFXApplication extends Application {
 			public void run() {
 				group.getChildren().clear();
 				gameList.getChildren().clear();
-				
+
 			}
 		});
 	}
@@ -146,8 +153,14 @@ public class ClientFXApplication extends Application {
 		});
 	}
 
-	public void updateUnknownPlayer(String status) {
-		// TODO Auto-generated method stub
-		System.out.println("Unknown player");
+	public void updateUnknownPlayer(final String status) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				popup.getContent().clear();
+				popup.getContent().addAll(new Label("Unknown player:" + status));
+				popup.show(stage);
+			}
+		});
 	}
 }

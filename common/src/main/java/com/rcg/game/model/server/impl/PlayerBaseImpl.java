@@ -35,6 +35,8 @@ public class PlayerBaseImpl implements PlayerBase {
 	private static final String TAG_PLAYER_ID = "id";
 	private static final String TAG_PLAYER_CARDS = "cards";
 	private static final String TAG_PLAYER_CARDS_ID = "id";
+	private static final String TAG_PLAYER_DECKS = "decks";
+	private static final String TAG_PLAYER_DECKS_ID = "id";
 
 	private String filename;
 	private Map<Long, Player> players;
@@ -80,8 +82,8 @@ public class PlayerBaseImpl implements PlayerBase {
 		writePlayers();
 	}
 
-	private Player createPlayer(long id, String name, List<Long> cardIds) {
-		return new PlayerImpl(id, name, cardIds);
+	private Player createPlayer(long id, String name, List<Long> cardIds, List<Long> deckIds) {
+		return new PlayerImpl(id, name, cardIds, deckIds);
 	}
 
 	private void readPlayers() {
@@ -115,8 +117,18 @@ public class PlayerBaseImpl implements PlayerBase {
 								cardIds.add(cardId);
 							}
 						}
+						NodeList decks = ((Element)element.getElementsByTagName(TAG_PLAYER_DECKS).item(0)).getElementsByTagName(TAG_PLAYER_DECKS_ID);
+						List<Long> deckIds = new ArrayList<>();
+						for (int j = 0; j < decks.getLength(); j++) {
+							Node deckNode = decks.item(j);
+							if (deckNode.getNodeType() == Node.ELEMENT_NODE) {
+								Element deckEl = (Element) deckNode;
+								Long deckId = new Long(deckEl.getTextContent());
+								deckIds.add(deckId);
+							}
+						}
 						System.out.println("Player id:" + id + " name:" + name);
-						Player player = createPlayer(id, name, cardIds);
+						Player player = createPlayer(id, name, cardIds, deckIds);
 						players.put(id, player);
 					}
 				}
@@ -165,6 +177,14 @@ public class PlayerBaseImpl implements PlayerBase {
 					cards.appendChild(cardIdEl);
 				}
 				player.appendChild(cards);
+
+				Element decks = doc.createElement(TAG_PLAYER_DECKS);
+				for (Long deckId : currentPlayer.getAllDeckIds()) {
+					Element deckIdEl = doc.createElement(TAG_PLAYER_DECKS_ID);
+					deckIdEl.appendChild(doc.createTextNode(Long.toString(deckId)));
+					decks.appendChild(deckIdEl);
+				}
+				player.appendChild(decks);
 			}
 
 			// write the content into xml file

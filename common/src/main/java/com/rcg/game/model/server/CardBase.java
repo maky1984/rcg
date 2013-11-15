@@ -13,6 +13,8 @@ public interface CardBase {
 	public void addCard(Card card);
 
 	public void addCard(Card... cards);
+	
+	public void updateCard(Card card);
 
 	public List<Card> getAllCards();
 	
