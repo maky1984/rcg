@@ -6,6 +6,7 @@ public class ResponseConnectToGame extends ClientResponse {
 	private String gameName;
 	private String player1Name;
 	private String player2Name;
+	private boolean readyToStart;
 
 	public void setGameId(long gameId) {
 		this.gameId = gameId;
@@ -22,6 +23,10 @@ public class ResponseConnectToGame extends ClientResponse {
 	public void setPlayer2Name(String player2Name) {
 		this.player2Name = player2Name;
 	}
+	
+	public void setReadyToStart(boolean readyToStart) {
+		this.readyToStart = readyToStart;
+	}
 
 	public long getGameId() {
 		return gameId;
@@ -37,5 +42,9 @@ public class ResponseConnectToGame extends ClientResponse {
 
 	public String getPlayer2Name() {
 		return player2Name;
+	}
+	
+	public boolean isReadyToStart() {
+		return readyToStart;
 	}
 }

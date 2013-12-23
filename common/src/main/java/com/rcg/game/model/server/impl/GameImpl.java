@@ -30,7 +30,7 @@ public class GameImpl implements Game, MessageHandler {
 	private MessageService messageService;
 	private TaskExecutor taskExecutor;
 	
-	private long id;
+	private long id = Game.EMPTY_GAME_ID;
 	private Player player1;
 	private Player player2;
 	
@@ -62,7 +62,9 @@ public class GameImpl implements Game, MessageHandler {
 	
 	@Override
 	public void open() {
-		id = UUID.randomUUID().getMostSignificantBits();
+		do {
+			id = UUID.randomUUID().getMostSignificantBits();
+		} while (id == EMPTY_GAME_ID);
 		// check all preconditions
 		updateState(ServerInnerState.WAIT_PLAYER1);
 	}

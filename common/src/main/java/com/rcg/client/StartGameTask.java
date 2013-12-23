@@ -14,6 +14,7 @@ import com.rcg.common.ResponseConnectToGame;
 import com.rcg.common.ResponseGameList;
 import com.rcg.common.ResponseRegisterClientHandle;
 import com.rcg.common.ResponseUnknownPlayer;
+import com.rcg.game.model.server.Game;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -67,7 +68,7 @@ public class StartGameTask implements Task, MessageHandler {
 			app.updateGameList(response.getGames());
 		} else if (message.getClassName().equals(ResponseConnectToGame.class.getName())) {
 			ResponseConnectToGame response = message.unpackMessage();
-			if (response.getPlayer1Name() != null && response.getPlayer2Name() != null) {
+			if (response.isReadyToStart()) {
 				executor.removeTask(updateGameListTask);
 				app.startGameProcess(response.getGameName(), response.getGameId());
 			} else {
@@ -107,11 +108,7 @@ public class StartGameTask implements Task, MessageHandler {
 	}
 
 	public void startGame() {
-		RequestConnectToGame request = new RequestConnectToGame();
-		request.setCreateNewGame(true);
-		request.setPlayerName(app.getPlayerName());
-		request.setPlayerId(app.getPlayerId());
-		messageService.send(getClientHandle(), new Message(request));
+		connectToGame(Game.EMPTY_GAME_ID);
 	}
 
 	public void connectToGame(long id) {
