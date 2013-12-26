@@ -23,9 +23,9 @@ import com.rcg.server.api.Task;
 import com.rcg.server.api.TaskExecutor;
 import com.rcg.server.impl.ClientHandleImpl;
 
-public class StartGameTask implements Task, MessageHandler {
+public class StartClientGameTask implements Task, MessageHandler {
 
-	private final static Logger logger = LoggerFactory.getLogger(StartGameTask.class);
+	private final static Logger logger = LoggerFactory.getLogger(StartClientGameTask.class);
 	private final static long UPDATE_GAME_LIST_PERIOD = 5000;	
 	
 	private MessageService messageService;

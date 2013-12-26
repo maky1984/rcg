@@ -20,7 +20,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import com.rcg.client.StartClientTask;
-import com.rcg.client.StartGameTask;
+import com.rcg.client.StartClientGameTask;
 import com.rcg.common.GameView;
 import com.rcg.server.api.Task;
 import com.rcg.server.api.TaskExecutor;
@@ -29,7 +29,7 @@ public class ClientFXApplication extends Application {
 
 	private TaskExecutor taskExecutor;
 	private StartClientTask task;
-	private StartGameTask startGameTask;
+	private StartClientGameTask startGameTask;
 
 	private Pane group = new VBox();
 
@@ -51,7 +51,7 @@ public class ClientFXApplication extends Application {
 			@Override
 			public void handle(ActionEvent arg0) {
 				if (task.isReady()) {
-					startGameTask = new StartGameTask();
+					startGameTask = new StartClientGameTask();
 					startGameTask.setMessageService(task.getMessageService());
 					startGameTask.setExecutor(taskExecutor);
 					startGameTask.setApp(ClientFXApplication.this);

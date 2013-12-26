@@ -8,4 +8,7 @@ public interface GameClub {
 	
 	public Game addGame(Player player);
 	
+	public Game getGame(long id);
+	
+	public Game connectToGame(long id, Player player);
 }

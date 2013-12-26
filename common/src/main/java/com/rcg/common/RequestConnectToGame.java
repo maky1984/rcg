@@ -4,7 +4,6 @@ public class RequestConnectToGame extends ClientRequest {
 
 	private String playerName;
 	private long playerId;
-	private boolean createNewGame;
 	private long gameId;
 	
 	public RequestConnectToGame() {
@@ -25,14 +24,6 @@ public class RequestConnectToGame extends ClientRequest {
 	
 	public void setGameId(long gameId) {
 		this.gameId = gameId;
-	}
-	
-	public boolean isCreateNewGame() {
-		return createNewGame;
-	}
-	
-	public void setCreateNewGame(boolean createNewGame) {
-		this.createNewGame = createNewGame;
 	}
 	
 	public void setPlayerName(String playerName) {

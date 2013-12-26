@@ -11,14 +11,26 @@ import com.rcg.game.model.server.Player;
 
 public class GameClubImpl implements GameClub {
 
-	private Map<Player, Game> games = new HashMap<Player, Game>();
+	private Map<Long, Game> games = new HashMap<Long, Game>();
 	
 	@Override
 	public Game addGame(Player player) {
 		Game game = new GameImpl();
 		game.open();
 		game.add(player);
-		games.put(player, game);
+		games.put(game.getId(), game);
+		return game;
+	}
+	
+	@Override
+	public Game getGame(long id) {
+		return games.get(id);
+	}
+	
+	@Override
+	public Game connectToGame(long id, Player player) {
+		Game game = games.get(id);
+		game.add(player);
 		return game;
 	}
 	
@@ -26,4 +38,5 @@ public class GameClubImpl implements GameClub {
 	public List<Game> getGames() {
 		return new ArrayList<Game>(games.values());
 	}
+
 }
