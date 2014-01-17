@@ -74,5 +74,20 @@ public class PlayerImpl implements Player {
 	public Deck getCurrentDeck() {
 		return deck;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Player)) {
+			return false;
+		}
+		Player otherPlayer = (Player)obj;
+		if (otherPlayer.getId() == getId() && otherPlayer.getName().equals(getName())) {
+			return true;
+		}
+		return false;
+	}
 
 }

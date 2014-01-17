@@ -44,7 +44,7 @@ public class StartServerTask implements Task, MessageHandler {
 	@Override
 	public boolean accept(Message message, ClientHandle caller) {
 		if (message.getClassName().equals(RequestGameList.class.getName())) {
-			RequestGameList request = message.unpackMessage();
+			// RequestGameList request = message.unpackMessage();
 			List<Game> games = gameClub.getGames();
 			ResponseGameList response = new ResponseGameList();
 			List<GameView> views = new ArrayList<>();
@@ -70,16 +70,28 @@ public class StartServerTask implements Task, MessageHandler {
 			} else {
 				player.setClientHandle(caller);
 				Game game;
+				ResponseConnectToGame connectResponse = new ResponseConnectToGame();
 				if (request.getGameId() == Game.EMPTY_GAME_ID) {
 					game = gameClub.addGame(player);
+					connectResponse.setReadyToStart(false);
+					connectResponse.setGameId(game.getId());
+					connectResponse.setGameName(game.getName());
+					connectResponse.setPlayer1Name(game.getPlayer1Name());
 				} else {
 					game = gameClub.connectToGame(request.getGameId(), player);
-					// TODO: add start game on server
+					if (game.isReadyForPlay()) {
+						connectResponse.setReadyToStart(true);
+						connectResponse.setGameId(game.getId());
+						connectResponse.setGameName(game.getName());
+						connectResponse.setPlayer1Name(game.getPlayer1Name());
+						connectResponse.setPlayer2Name(game.getPlayer2Name());
+						// TODO: add start game on server
+					} else {
+						connectResponse.setReadyToStart(false);
+						connectResponse.setGameId(game.getId());
+						connectResponse.setGameName(game.getName());
+					}
 				}
-				ResponseConnectToGame connectResponse = new ResponseConnectToGame();
-				connectResponse.setGameId(game.getId());
-				connectResponse.setGameName(game.getName());
-				connectResponse.setPlayer1Name(player.getName());
 				response = connectResponse;
 			}
 			messageService.send(caller, new Message(response));

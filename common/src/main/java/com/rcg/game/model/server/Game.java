@@ -14,4 +14,10 @@ public interface Game {
 	
 	public void add(Player player);
 	
+	public boolean isReadyForPlay();
+	
+	public String getPlayer1Name();
+	
+	public String getPlayer2Name();
+	
 }
