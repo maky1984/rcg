@@ -1,10 +1,11 @@
 package com.rcg.client.javafxapp;
 
+import com.rcg.game.model.Card;
+
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -18,8 +19,6 @@ import javafx.stage.Stage;
 
 public class GameTableFX {
 
-	public static final int CARD_LIST_SIZE = 8;
-
 	private Stage stage;
 	private Scene scene;
 
@@ -29,7 +28,9 @@ public class GameTableFX {
 
 	private VBox userState = new VBox(10);
 	private VBox enemyState = new VBox(10);
-	
+
+	private HBox center = new HBox(100);
+
 	private Text leftBricksNumber = new Text();
 	private Text leftQuerryNumber = new Text();
 	private Text leftGemsNumber = new Text();
@@ -43,12 +44,14 @@ public class GameTableFX {
 	private Text rightMagicNumber = new Text();
 	private Text rightRecruitsNumber = new Text();
 	private Text rightDungeonNumber = new Text();
-	
-	private Text leftTower;
-	private Text leftWall;
-	private Text rightTower;
-	private Text rightWall;
 
+	private Text leftTowerNumber;
+	private Text leftWallNumber;
+	private Text rightTowerNumber;
+	private Text rightWallNumber;
+
+	private Card[] cards = new Card[0];
+	
 	public GameTableFX() {
 		initialize();
 	}
@@ -65,14 +68,22 @@ public class GameTableFX {
 
 	private void fillCardList() {
 		cardList.setAlignment(Pos.CENTER);
-		for (int i = 0; i < CARD_LIST_SIZE; i++) {
+		for (int i = 0; i < getCardListSize(); i++) {
 			cardList.getChildren().add(createCard());
 		}
+	}
+	
+	public void update() {
+		//TODO
+	}
+	
+	private int getCardListSize() {
+		return cards.length;
 	}
 
 	private Node createStateNode(Paint color, String first, Text firstNumber, String second, Text secondNumber) {
 		StackPane stack = new StackPane();
-		Rectangle rec= new Rectangle(100, 100, color);
+		Rectangle rec = new Rectangle(100, 100, color);
 		VBox vbox = new VBox(0);
 		Font font = new Font(16);
 		Text firstText = new Text(first);
@@ -89,19 +100,47 @@ public class GameTableFX {
 		stack.getChildren().addAll(rec, vbox);
 		return stack;
 	}
-	
+
 	private void fillUserState() {
-		Node bricks = createStateNode(Color.BLACK,"Bricks:", leftBricksNumber, "Quarry:", leftQuerryNumber);
-		Node gems = createStateNode(Color.BLACK,"Gems:", leftGemsNumber, "Magic:", leftMagicNumber);
-		Node recruits = createStateNode(Color.BLACK,"Recruits:", leftRecruitsNumber, "Dungeon:", leftDungeonNumber);
+		Node bricks = createStateNode(Color.BLACK, "Bricks:", leftBricksNumber, "Quarry:", leftQuerryNumber);
+		Node gems = createStateNode(Color.BLACK, "Gems:", leftGemsNumber, "Magic:", leftMagicNumber);
+		Node recruits = createStateNode(Color.BLACK, "Recruits:", leftRecruitsNumber, "Dungeon:", leftDungeonNumber);
 		userState.getChildren().addAll(bricks, gems, recruits);
 	}
 
 	private void fillEnemyState() {
-		Node bricks = createStateNode(Color.BLACK,"Bricks:", rightBricksNumber, "Quarry:", rightQuerryNumber);
-		Node gems = createStateNode(Color.BLACK,"Gems:", rightGemsNumber, "Magic:", rightMagicNumber);
-		Node recruits = createStateNode(Color.BLACK,"Recruits:", rightRecruitsNumber, "Dungeon:", rightDungeonNumber);
+		Node bricks = createStateNode(Color.BLACK, "Bricks:", rightBricksNumber, "Quarry:", rightQuerryNumber);
+		Node gems = createStateNode(Color.BLACK, "Gems:", rightGemsNumber, "Magic:", rightMagicNumber);
+		Node recruits = createStateNode(Color.BLACK, "Recruits:", rightRecruitsNumber, "Dungeon:", rightDungeonNumber);
 		enemyState.getChildren().addAll(bricks, gems, recruits);
+	}
+
+	private void fillCenter() {
+		Font font = new Font(20);
+		Text leftTowerText = new Text("Tower:");
+		leftTowerText.setFont(font);
+		leftTowerNumber = new Text();
+		leftTowerNumber.setFont(font);
+		Text leftWallText = new Text("Wall:");
+		leftWallText.setFont(font);
+		leftWallNumber = new Text();
+		leftWallNumber.setFont(font);
+		Text rightTowerText = new Text("Enemy tower:");
+		rightTowerText.setFont(font);
+		rightTowerNumber = new Text();
+		rightTowerNumber.setFont(font);
+		Text rightWallText = new Text("Enemy wall:");
+		rightWallText.setFont(font);
+		rightWallNumber = new Text();
+		rightWallNumber.setFont(font);
+		VBox leftPart = new VBox(10);
+		leftPart.getChildren().addAll(leftTowerText, leftTowerNumber, leftWallText, leftWallNumber);
+		leftPart.setAlignment(Pos.CENTER);
+		VBox rightPart = new VBox(10);
+		rightPart.getChildren().addAll(rightTowerText, rightTowerNumber, rightWallText, rightWallNumber);
+		rightPart.setAlignment(Pos.CENTER);
+		center.getChildren().addAll(leftPart, rightPart);
+		center.setAlignment(Pos.CENTER);
 	}
 
 	private void initialize() {
@@ -110,9 +149,16 @@ public class GameTableFX {
 		fillCardList();
 		fillUserState();
 		fillEnemyState();
+		fillCenter();
 		mainBorderPane.setBottom(cardList);
 		mainBorderPane.setLeft(userState);
 		mainBorderPane.setRight(enemyState);
+		mainBorderPane.setCenter(center);
+		stage.setScene(scene);
+	}
+	
+	public Stage getStage() {
+		return stage;
 	}
 
 	public static class TestFXApp extends Application {

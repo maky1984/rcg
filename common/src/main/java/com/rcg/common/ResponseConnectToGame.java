@@ -47,4 +47,14 @@ public class ResponseConnectToGame extends ClientResponse {
 	public boolean isReadyToStart() {
 		return readyToStart;
 	}
+	
+	public ResponseConnectToGame copyIt() {
+		ResponseConnectToGame response = new ResponseConnectToGame();
+		response.gameId = gameId;
+		response.gameName = gameName;
+		response.player1Name = player1Name;
+		response.player2Name = player2Name;
+		response.readyToStart = readyToStart;
+		return response;
+	}
 }

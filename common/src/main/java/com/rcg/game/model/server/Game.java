@@ -16,8 +16,8 @@ public interface Game {
 	
 	public boolean isReadyForPlay();
 	
-	public String getPlayer1Name();
+	public Player getPlayer1();
 	
-	public String getPlayer2Name();
+	public Player getPlayer2();
 	
 }

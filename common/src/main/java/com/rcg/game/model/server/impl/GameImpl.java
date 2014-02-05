@@ -116,13 +116,13 @@ public class GameImpl implements Game, MessageHandler {
 	}
 	
 	@Override
-	public String getPlayer1Name() {
-		return player1 == null ? null : player1.getName();
+	public Player getPlayer1() {
+		return player1;
 	}
 	
 	@Override
-	public String getPlayer2Name() {
-		return player2 == null ? null : player2.getName();
+	public Player getPlayer2() {
+		return player2;
 	}
 
 	@Override

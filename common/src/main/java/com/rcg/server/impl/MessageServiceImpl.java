@@ -158,7 +158,9 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		Client resClient = null;
 		synchronized (clients) {
 			for (Client client : clients) {
-				if (client.handle.equals(handle)) {
+				if (client.handle == null) {
+					logger.info("INFO. there is client with null handle client = " + client);
+				} else if (client.handle.equals(handle)) {
 					if (resClient != null) {
 						logger.error("ERROR! check error. There are two clients with the same handle");
 					}

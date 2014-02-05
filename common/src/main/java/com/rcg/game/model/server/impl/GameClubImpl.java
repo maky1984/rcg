@@ -14,7 +14,7 @@ public class GameClubImpl implements GameClub {
 	private Map<Long, Game> games = new HashMap<Long, Game>();
 	
 	@Override
-	public Game addGame(Player player) {
+	public Game createGameWithPlayer1(Player player) {
 		Game game = new GameImpl();
 		game.open();
 		game.add(player);
@@ -28,7 +28,7 @@ public class GameClubImpl implements GameClub {
 	}
 	
 	@Override
-	public Game connectToGame(long id, Player player) {
+	public Game connectPlayer2ToGame(long id, Player player) {
 		Game game = games.get(id);
 		game.add(player);
 		return game;

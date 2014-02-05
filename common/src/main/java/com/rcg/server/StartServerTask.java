@@ -72,20 +72,23 @@ public class StartServerTask implements Task, MessageHandler {
 				Game game;
 				ResponseConnectToGame connectResponse = new ResponseConnectToGame();
 				if (request.getGameId() == Game.EMPTY_GAME_ID) {
-					game = gameClub.addGame(player);
+					game = gameClub.createGameWithPlayer1(player);
 					connectResponse.setReadyToStart(false);
 					connectResponse.setGameId(game.getId());
 					connectResponse.setGameName(game.getName());
-					connectResponse.setPlayer1Name(game.getPlayer1Name());
+					connectResponse.setPlayer1Name(game.getPlayer1().getName());
 				} else {
-					game = gameClub.connectToGame(request.getGameId(), player);
+					game = gameClub.connectPlayer2ToGame(request.getGameId(), player);
 					if (game.isReadyForPlay()) {
 						connectResponse.setReadyToStart(true);
 						connectResponse.setGameId(game.getId());
 						connectResponse.setGameName(game.getName());
-						connectResponse.setPlayer1Name(game.getPlayer1Name());
-						connectResponse.setPlayer2Name(game.getPlayer2Name());
+						connectResponse.setPlayer1Name(game.getPlayer1().getName());
+						connectResponse.setPlayer2Name(game.getPlayer2().getName());
 						// TODO: add start game on server
+						// Send response to first player, that both player are ready to play
+						Player player1 = game.getPlayer1();
+						messageService.send(player1.getClientHandle(), new Message(connectResponse.copyIt()));
 					} else {
 						connectResponse.setReadyToStart(false);
 						connectResponse.setGameId(game.getId());

@@ -140,9 +140,14 @@ public class ClientFXApplication extends Application {
 			public void run() {
 				group.getChildren().clear();
 				gameList.getChildren().clear();
-
+				startGameTable();
 			}
 		});
+	}
+	
+	private void startGameTable() {
+		GameTableFX gameTable = new GameTableFX();
+		gameTable.getStage().show();
 	}
 
 	public void updateWaitForPlayer(final String gameName, final long gameId) {

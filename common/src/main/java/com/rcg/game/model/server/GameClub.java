@@ -6,9 +6,9 @@ public interface GameClub {
 
 	public List<Game> getGames();
 	
-	public Game addGame(Player player);
+	public Game createGameWithPlayer1(Player player);
 	
 	public Game getGame(long id);
 	
-	public Game connectToGame(long id, Player player);
+	public Game connectPlayer2ToGame(long id, Player player);
 }
