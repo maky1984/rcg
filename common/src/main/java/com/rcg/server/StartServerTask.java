@@ -72,13 +72,13 @@ public class StartServerTask implements Task, MessageHandler {
 				Game game;
 				ResponseConnectToGame connectResponse = new ResponseConnectToGame();
 				if (request.getGameId() == Game.EMPTY_GAME_ID) {
-					game = gameClub.createGameWithPlayer1(player);
+					game = gameClub.createGameWithPlayer1(player, request.getDeckId());
 					connectResponse.setReadyToStart(false);
 					connectResponse.setGameId(game.getId());
 					connectResponse.setGameName(game.getName());
 					connectResponse.setPlayer1Name(game.getPlayer1().getName());
 				} else {
-					game = gameClub.connectPlayer2ToGame(request.getGameId(), player);
+					game = gameClub.connectPlayer2ToGame(request.getGameId(), player, request.getDeckId());
 					if (game.isReadyForPlay()) {
 						connectResponse.setReadyToStart(true);
 						connectResponse.setGameId(game.getId());

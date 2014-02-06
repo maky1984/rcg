@@ -12,7 +12,9 @@ public interface Game {
 	
 	public void open();
 	
-	public void add(Player player);
+	public void setPlayer1(Player player, long deckId);
+	
+	public void setPlayer2(Player player, long deckId);
 	
 	public boolean isReadyForPlay();
 	

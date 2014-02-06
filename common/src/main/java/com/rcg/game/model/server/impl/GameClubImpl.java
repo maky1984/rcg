@@ -14,10 +14,10 @@ public class GameClubImpl implements GameClub {
 	private Map<Long, Game> games = new HashMap<Long, Game>();
 	
 	@Override
-	public Game createGameWithPlayer1(Player player) {
+	public Game createGameWithPlayer1(Player player, long deckId) {
 		Game game = new GameImpl();
 		game.open();
-		game.add(player);
+		game.setPlayer1(player, deckId);
 		games.put(game.getId(), game);
 		return game;
 	}
@@ -28,9 +28,9 @@ public class GameClubImpl implements GameClub {
 	}
 	
 	@Override
-	public Game connectPlayer2ToGame(long id, Player player) {
+	public Game connectPlayer2ToGame(long id, Player player, long deckId) {
 		Game game = games.get(id);
-		game.add(player);
+		game.setPlayer2(player, deckId);
 		return game;
 	}
 	

@@ -147,7 +147,9 @@ public class ClientFXApplication extends Application {
 	
 	private void startGameTable() {
 		GameTableFX gameTable = new GameTableFX();
+		gameTable.setMsgService(task.getMessageService());
 		gameTable.getStage().show();
+		startGameTask.getClientHandle().addMessageHandler(gameTable);
 	}
 
 	public void updateWaitForPlayer(final String gameName, final long gameId) {

@@ -1,6 +1,14 @@
 package com.rcg.client.javafxapp;
 
+import com.rcg.common.GameTableUpdate;
+import com.rcg.common.ResponseConnectToGame;
+import com.rcg.common.ResponseGameList;
+import com.rcg.common.ResponseUnknownPlayer;
 import com.rcg.game.model.Card;
+import com.rcg.server.api.ClientHandle;
+import com.rcg.server.api.Message;
+import com.rcg.server.api.MessageHandler;
+import com.rcg.server.api.MessageService;
 
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -17,7 +25,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class GameTableFX {
+public class GameTableFX implements MessageHandler {
 
 	private Stage stage;
 	private Scene scene;
@@ -52,10 +60,16 @@ public class GameTableFX {
 
 	private Card[] cards = new Card[0];
 	
+	private MessageService msgService;
+	
 	public GameTableFX() {
 		initialize();
 	}
 
+	public void setMsgService(MessageService msgService) {
+		this.msgService = msgService;
+	}
+	
 	public Scene getScene() {
 		return scene;
 	}
@@ -159,6 +173,15 @@ public class GameTableFX {
 	
 	public Stage getStage() {
 		return stage;
+	}
+	
+	@Override
+	public boolean accept(Message message, ClientHandle caller) {
+		if (message.getClassName().equals(GameTableUpdate.class.getName())) {
+			GameTableUpdate update = message.unpackMessage();
+			// TODO
+		}
+		return true;
 	}
 
 	public static class TestFXApp extends Application {

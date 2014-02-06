@@ -69,7 +69,7 @@ public class StartClientGameTask implements Task, MessageHandler {
 		} else if (message.getClassName().equals(ResponseConnectToGame.class.getName())) {
 			ResponseConnectToGame response = message.unpackMessage();
 			if (response.isReadyToStart()) {
-				executor.removeTask(updateGameListTask);
+				// executor.removeTask(updateGameListTask); - let update the game list forever
 				app.startGameProcess(response.getGameName(), response.getGameId());
 			} else {
 				app.updateWaitForPlayer(response.getGameName(), response.getGameId());

@@ -15,7 +15,6 @@ public class PlayerImpl implements Player {
 	// List of deck ids
 	private List<Long> allDeckIds;
 
-	private Deck deck;
 	private ClientHandle handle;
 
 	public PlayerImpl(long id, String name, List<Long> allCardIds, List<Long> allDeckIds) {
@@ -56,11 +55,6 @@ public class PlayerImpl implements Player {
 		return name;
 	}
 
-	@Override
-	public void fillHand(Deck deck) {
-		// TODO
-	}
-
 	public void setClientHandle(ClientHandle handle) {
 		this.handle = handle;
 	}
@@ -68,11 +62,6 @@ public class PlayerImpl implements Player {
 	@Override
 	public ClientHandle getClientHandle() {
 		return handle;
-	}
-
-	@Override
-	public Deck getCurrentDeck() {
-		return deck;
 	}
 	
 	@Override

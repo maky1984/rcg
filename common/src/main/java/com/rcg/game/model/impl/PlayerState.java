@@ -3,14 +3,21 @@ package com.rcg.game.model.impl;
 import java.util.List;
 
 import com.rcg.game.model.Card;
+import com.rcg.game.model.server.Player;
 
 
 public class PlayerState {
 
+	private Player player;
+	
 	private int bricks, gems, recruiters, quarry, magic, dungeon, wall, tower;
 	private List<Card> hand;
 	private boolean hasTurn;
 
+	public PlayerState(Player player) {
+		this.player = player; 
+	}
+	
 	/**
 	 * Quarry generates bricks
 	 * @return
@@ -101,5 +108,9 @@ public class PlayerState {
 	
 	public void setWall(int wall) {
 		this.wall = wall;
+	}
+	
+	public Player getPlayer() {
+		return player;
 	}
 }

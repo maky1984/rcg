@@ -5,6 +5,7 @@ public class RequestConnectToGame extends ClientRequest {
 	private String playerName;
 	private long playerId;
 	private long gameId;
+	private long deckId;
 	
 	public RequestConnectToGame() {
 		super(RequestConnectToGame.class.getName());
@@ -32,6 +33,14 @@ public class RequestConnectToGame extends ClientRequest {
 	
 	public String getPlayerName() {
 		return playerName;
+	}
+	
+	public void setDeckId(long deckId) {
+		this.deckId = deckId;
+	}
+	
+	public long getDeckId() {
+		return deckId;
 	}
 	
 }

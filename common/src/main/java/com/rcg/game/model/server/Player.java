@@ -19,7 +19,4 @@ public interface Player {
 
 	public List<Long> getAllDeckIds();
 	
-	public Deck getCurrentDeck();
-	
-	public void fillHand(Deck deck);
 }

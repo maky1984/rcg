@@ -5,6 +5,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rcg.game.model.Deck;
+import com.rcg.game.model.server.DeckBase;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.Player;
 import com.rcg.server.api.ClientHandle;
@@ -28,10 +30,15 @@ public class GameImpl implements Game, MessageHandler {
 
 	private MessageService messageService;
 	private TaskExecutor taskExecutor;
+	private DeckBase deckBase;
 
 	private long id = Game.EMPTY_GAME_ID;
+	
 	private Player player1;
+	private Deck player1Deck;
+	
 	private Player player2;
+	private Deck player2Deck;
 
 	private ServerInnerState state = ServerInnerState.INIT;
 
@@ -41,6 +48,10 @@ public class GameImpl implements Game, MessageHandler {
 
 	public void setTaskExecutor(TaskExecutor taskExecutor) {
 		this.taskExecutor = taskExecutor;
+	}
+	
+	public void setDeckBase(DeckBase deckBase) {
+		this.deckBase = deckBase;
 	}
 
 	private void updateState(ServerInnerState newState) {
@@ -70,8 +81,6 @@ public class GameImpl implements Game, MessageHandler {
 
 	private void drawCards() {
 		updateState(ServerInnerState.DRAW_CARDS);
-		player1.fillHand(player1.getCurrentDeck());
-		player2.fillHand(player2.getCurrentDeck());
 		sendGameState();
 		updateState(ServerInnerState.WAIT_CARD_FROM_1);
 	}
@@ -81,8 +90,18 @@ public class GameImpl implements Game, MessageHandler {
 	}
 
 	@Override
-	public void add(Player player) {
+	public void setPlayer1(Player player, long deckId) {
+		setPlayer(player, deckId);
+	}
+	
+	@Override
+	public void setPlayer2(Player player, long deckId) {
+		setPlayer(player, deckId);
+	}
+	
+	public void setPlayer(Player player, long deckId) {
 		if (state == ServerInnerState.WAIT_PLAYER1) {
+			player1Deck = deckBase.getDeckById(deckId);
 			player1 = player;
 			player1.getClientHandle().addMessageHandler(this);
 			updateState(ServerInnerState.WAIT_PLAYER2);
@@ -90,6 +109,7 @@ public class GameImpl implements Game, MessageHandler {
 			if (player1.equals(player)) {
 				logger.info("ERROR You are trying to add player that is duplicating the first player=", player);
 			} else {
+				player2Deck = deckBase.getDeckById(deckId);
 				player2 = player;
 				player2.getClientHandle().addMessageHandler(this);
 				drawCards();
