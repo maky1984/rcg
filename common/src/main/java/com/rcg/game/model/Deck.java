@@ -9,13 +9,6 @@ public interface Deck {
 	public String getName();
 	
 	public List<Long> getAllCardIds();
-	
-	public void shuffle();
-	
-	public Card drawNext();
-	
-	public Card viewNext();
-	
-	public boolean hasNext();
-	
+
+	public List<Card> getAllCards();
 }

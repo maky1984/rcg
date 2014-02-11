@@ -1,8 +1,7 @@
-package com.rcg.game.model.impl;
+package com.rcg.game.model;
 
 import java.util.List;
 
-import com.rcg.game.model.Card;
 import com.rcg.game.model.server.Player;
 
 
@@ -12,7 +11,7 @@ public class PlayerState {
 	
 	private int bricks, gems, recruiters, quarry, magic, dungeon, wall, tower;
 	private List<Card> hand;
-	private boolean hasTurn;
+//	private boolean hasTurn;
 
 	public PlayerState(Player player) {
 		this.player = player; 
@@ -66,9 +65,9 @@ public class PlayerState {
 		return wall;
 	}
 	
-	public boolean hasTurn() {
-		return hasTurn;
-	}
+//	public boolean hasTurn() {
+//		return hasTurn;
+//	}
 	
 	public void setBricks(int bricks) {
 		this.bricks = bricks;
@@ -86,9 +85,9 @@ public class PlayerState {
 		this.hand = hand;
 	}
 	
-	public void setHasTurn(boolean hasTurn) {
-		this.hasTurn = hasTurn;
-	}
+//	public void setHasTurn(boolean hasTurn) {
+//		this.hasTurn = hasTurn;
+//	}
 	
 	public void setMagic(int magic) {
 		this.magic = magic;

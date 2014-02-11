@@ -1,5 +1,6 @@
 package com.rcg.game.model.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.rcg.game.model.Card;
@@ -11,19 +12,19 @@ public class DeckImpl implements Deck {
 	private long id;
 	private String name;
 	private List<Long> allCardIds;
-	
+
 	private CardBase cardBase;
-	
+
 	public DeckImpl(long id, String name, List<Long> cardIds) {
 		this.id = id;
 		this.name = name;
 		this.allCardIds = cardIds;
 	}
-	
+
 	public void setCardBase(CardBase cardBase) {
 		this.cardBase = cardBase;
 	}
-	
+
 	@Override
 	public long getId() {
 		return id;
@@ -40,26 +41,11 @@ public class DeckImpl implements Deck {
 	}
 
 	@Override
-	public void shuffle() {
-		// TODO 
+	public List<Card> getAllCards() {
+		List<Card> cards = new ArrayList<>();
+		for (long id : allCardIds) {
+			cards.add(cardBase.getCardById(id));
+		}
+		return cards;
 	}
-
-	@Override
-	public Card drawNext() {
-		// TODO 
-		return null;
-	}
-
-	@Override
-	public Card viewNext() {
-		// TODO 
-		return null;
-	}
-
-	@Override
-	public boolean hasNext() {
-		// TODO 
-		return false;
-	}
-
 }

@@ -24,6 +24,7 @@ import org.w3c.dom.NodeList;
 import com.rcg.game.model.Action;
 import com.rcg.game.model.Card;
 import com.rcg.game.model.CardCost;
+import com.rcg.game.model.Action.ActionType;
 import com.rcg.game.model.impl.ActionImpl;
 import com.rcg.game.model.impl.CardCostImpl;
 import com.rcg.game.model.impl.CardImpl;
@@ -101,7 +102,7 @@ public class CardBaseImpl implements CardBase {
 		return cost;
 	}
 	
-	private Action createAction(int actionType, List<Integer> actionValues) {
+	private Action createAction(ActionType actionType, List<Integer> actionValues) {
 		Action action = new ActionImpl(actionType, actionValues);
 		return action;
 	}
@@ -148,7 +149,7 @@ public class CardBaseImpl implements CardBase {
 							Node actionNode = actionNodes.item(j);
 							if (actionNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element actionEl = (Element) actionNode;
-								int actionType = Integer.parseInt(actionEl.getElementsByTagName(TAG_CARD_ACTION_TYPE).item(0).getTextContent());
+								String actionType = actionEl.getElementsByTagName(TAG_CARD_ACTION_TYPE).item(0).getTextContent();
 								NodeList actionValueNodes = actionEl.getElementsByTagName(TAG_CARD_ACTION_VALUE);
 								List<Integer> actionValues = new ArrayList<>();
 								for (int k = 0; k < actionValueNodes.getLength(); k++) {
@@ -159,7 +160,7 @@ public class CardBaseImpl implements CardBase {
 										actionValues.add(value);
 									}
 								}
-								Action action = createAction(actionType, actionValues);
+								Action action = createAction(ActionType.valueOf(actionType), actionValues);
 								actions.add(action);
 							}
 						}
@@ -228,7 +229,7 @@ public class CardBaseImpl implements CardBase {
 					Element actionEl = doc.createElement(TAG_CARD_ACTION);
 
 					Element type = doc.createElement(TAG_CARD_ACTION_TYPE);
-					type.appendChild(doc.createTextNode(Long.toString(action.getType())));
+					type.appendChild(doc.createTextNode(action.getType().name()));
 					actionEl.appendChild(type);
 
 					List<Integer> actionValues = action.getValues();

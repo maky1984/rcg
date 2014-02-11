@@ -3,7 +3,6 @@ package com.rcg.server;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rcg.common.ClientRequest;
 import com.rcg.common.ClientResponse;
 import com.rcg.common.GameView;
 import com.rcg.common.RequestConnectToGame;
@@ -19,7 +18,6 @@ import com.rcg.game.model.server.Player;
 import com.rcg.game.model.server.PlayerBase;
 import com.rcg.game.model.server.impl.GameClubImpl;
 import com.rcg.game.model.server.impl.PlayerBaseImpl;
-import com.rcg.game.model.server.impl.PlayerImpl;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
@@ -36,9 +34,9 @@ public class StartServerTask implements Task, MessageHandler {
 	private TaskExecutor executor = new TaskExecutorImpl();
 
 	private MessageService messageService = new MessageServiceImpl();
-	
+
 	private GameClub gameClub = new GameClubImpl();
-	
+
 	private PlayerBase playerBase = new PlayerBaseImpl();
 
 	@Override
@@ -86,7 +84,8 @@ public class StartServerTask implements Task, MessageHandler {
 						connectResponse.setPlayer1Name(game.getPlayer1().getName());
 						connectResponse.setPlayer2Name(game.getPlayer2().getName());
 						// TODO: add start game on server
-						// Send response to first player, that both player are ready to play
+						// Send response to first player, that both player are
+						// ready to play
 						Player player1 = game.getPlayer1();
 						messageService.send(player1.getClientHandle(), new Message(connectResponse.copyIt()));
 					} else {

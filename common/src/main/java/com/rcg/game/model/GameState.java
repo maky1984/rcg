@@ -1,6 +1,5 @@
 package com.rcg.game.model;
 
-import com.rcg.game.model.impl.PlayerState;
 
 
 public class GameState {

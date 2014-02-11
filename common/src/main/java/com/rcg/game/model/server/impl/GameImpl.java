@@ -5,7 +5,10 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rcg.game.model.Deck;
+import com.rcg.game.model.DeckInGame;
+import com.rcg.game.model.PlayerActionProcessor;
+import com.rcg.game.model.impl.DeckInGameImpl;
+import com.rcg.game.model.impl.PlayerActionProcessorImpl;
 import com.rcg.game.model.server.DeckBase;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.Player;
@@ -23,9 +26,10 @@ public class GameImpl implements Game, MessageHandler {
 		INIT,
 		WAIT_PLAYER1,
 		WAIT_PLAYER2,
-		DRAW_CARDS,
+		INITIALIZING,
 		WAIT_CARD_FROM_1,
-		WAIT_CARD_FROM_2
+		WAIT_CARD_FROM_2,
+		FINISHING
 	};
 
 	private MessageService messageService;
@@ -33,12 +37,12 @@ public class GameImpl implements Game, MessageHandler {
 	private DeckBase deckBase;
 
 	private long id = Game.EMPTY_GAME_ID;
-	
+
 	private Player player1;
-	private Deck player1Deck;
-	
+	private PlayerActionProcessor processor1;
+
 	private Player player2;
-	private Deck player2Deck;
+	private PlayerActionProcessor processor2;
 
 	private ServerInnerState state = ServerInnerState.INIT;
 
@@ -49,7 +53,7 @@ public class GameImpl implements Game, MessageHandler {
 	public void setTaskExecutor(TaskExecutor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
-	
+
 	public void setDeckBase(DeckBase deckBase) {
 		this.deckBase = deckBase;
 	}
@@ -79,40 +83,35 @@ public class GameImpl implements Game, MessageHandler {
 		updateState(ServerInnerState.WAIT_PLAYER1);
 	}
 
-	private void drawCards() {
-		updateState(ServerInnerState.DRAW_CARDS);
-		sendGameState();
-		updateState(ServerInnerState.WAIT_CARD_FROM_1);
-	}
-
-	private void sendGameState() {
-		// TODO
-	}
-
 	@Override
 	public void setPlayer1(Player player, long deckId) {
 		setPlayer(player, deckId);
 	}
-	
+
 	@Override
 	public void setPlayer2(Player player, long deckId) {
 		setPlayer(player, deckId);
 	}
+
+	private void startGameProcessing() {
+		updateState(ServerInnerState.INITIALIZING);
+		// TODO
+	}
 	
 	public void setPlayer(Player player, long deckId) {
 		if (state == ServerInnerState.WAIT_PLAYER1) {
-			player1Deck = deckBase.getDeckById(deckId);
 			player1 = player;
 			player1.getClientHandle().addMessageHandler(this);
+			processor1 = new PlayerActionProcessorImpl(getPlayer1(), deckBase.getDeckById(deckId));
 			updateState(ServerInnerState.WAIT_PLAYER2);
 		} else if (state == ServerInnerState.WAIT_PLAYER2) {
 			if (player1.equals(player)) {
 				logger.info("ERROR You are trying to add player that is duplicating the first player=", player);
 			} else {
-				player2Deck = deckBase.getDeckById(deckId);
 				player2 = player;
 				player2.getClientHandle().addMessageHandler(this);
-				drawCards();
+				processor2 = new PlayerActionProcessorImpl(getPlayer2(), deckBase.getDeckById(deckId));
+				startGameProcessing();
 			}
 		} else {
 			logger.error("ERROR Cant add more players to the game");
@@ -134,12 +133,12 @@ public class GameImpl implements Game, MessageHandler {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Player getPlayer1() {
 		return player1;
 	}
-	
+
 	@Override
 	public Player getPlayer2() {
 		return player2;
