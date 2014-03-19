@@ -58,7 +58,7 @@ public class GameImpl implements Game, MessageHandler {
 		this.deckBase = deckBase;
 	}
 
-	private void updateState(ServerInnerState newState) {
+	private void updateInnerState(ServerInnerState newState) {
 		state = newState;
 	}
 
@@ -80,7 +80,7 @@ public class GameImpl implements Game, MessageHandler {
 			id = UUID.randomUUID().getMostSignificantBits();
 		} while (id == EMPTY_GAME_ID);
 		// check all preconditions
-		updateState(ServerInnerState.WAIT_PLAYER1);
+		updateInnerState(ServerInnerState.WAIT_PLAYER1);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class GameImpl implements Game, MessageHandler {
 	}
 
 	private void startGameProcessing() {
-		updateState(ServerInnerState.INITIALIZING);
+		updateInnerState(ServerInnerState.INITIALIZING);
 		// TODO
 	}
 	
@@ -103,7 +103,7 @@ public class GameImpl implements Game, MessageHandler {
 			player1 = player;
 			player1.getClientHandle().addMessageHandler(this);
 			processor1 = new PlayerActionProcessorImpl(getPlayer1(), deckBase.getDeckById(deckId));
-			updateState(ServerInnerState.WAIT_PLAYER2);
+			updateInnerState(ServerInnerState.WAIT_PLAYER2);
 		} else if (state == ServerInnerState.WAIT_PLAYER2) {
 			if (player1.equals(player)) {
 				logger.info("ERROR You are trying to add player that is duplicating the first player=", player);

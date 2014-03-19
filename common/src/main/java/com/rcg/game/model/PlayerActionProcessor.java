@@ -8,6 +8,10 @@ public interface PlayerActionProcessor {
 	
 	public void removeListener(PlayerActionListener listener);
 	
+	public void startTurn();
+	
+	public void endTurn();
+	
 	public void drawCards(int number);
 	
 	public void buildTower(int number);
