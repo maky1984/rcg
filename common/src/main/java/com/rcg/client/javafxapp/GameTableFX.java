@@ -1,21 +1,17 @@
 package com.rcg.client.javafxapp;
 
-import com.rcg.common.GameTableUpdate;
-import com.rcg.common.ResponseConnectToGame;
-import com.rcg.common.ResponseGameList;
-import com.rcg.common.ResponseUnknownPlayer;
-import com.rcg.game.model.Card;
-import com.rcg.server.api.ClientHandle;
-import com.rcg.server.api.Message;
-import com.rcg.server.api.MessageHandler;
-import com.rcg.server.api.MessageService;
+import java.util.List;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -25,7 +21,25 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.rcg.common.GameTableUpdate;
+import com.rcg.common.GameUserAction;
+import com.rcg.common.RequestGameTableUpdate;
+import com.rcg.game.model.Action;
+import com.rcg.game.model.Card;
+import com.rcg.game.model.PlayerState;
+import com.rcg.game.model.server.CardBase;
+import com.rcg.game.model.server.impl.CardBaseImpl;
+import com.rcg.server.api.ClientHandle;
+import com.rcg.server.api.Message;
+import com.rcg.server.api.MessageHandler;
+import com.rcg.server.api.MessageService;
+
 public class GameTableFX implements MessageHandler {
+
+	private static final Logger logger = LoggerFactory.getLogger(GameTableFX.class);
 
 	private Stage stage;
 	private Scene scene;
@@ -58,10 +72,13 @@ public class GameTableFX implements MessageHandler {
 	private Text rightTowerNumber;
 	private Text rightWallNumber;
 
-	private Card[] cards = new Card[0];
-	
+	private Card[] cards = new Card[6];
+
+	private CardBase cardBase = new CardBaseImpl();
+
 	private MessageService msgService;
-	
+	private ClientHandle serverHandle;
+
 	public GameTableFX() {
 		initialize();
 	}
@@ -69,28 +86,71 @@ public class GameTableFX implements MessageHandler {
 	public void setMsgService(MessageService msgService) {
 		this.msgService = msgService;
 	}
-	
+
 	public Scene getScene() {
 		return scene;
 	}
 
-	private Node createCard() {
+	private Node createCard(final Card card, final int numberInHand) {
 		Paint cardImage = Color.GREEN;
-		Rectangle card = new Rectangle(60, 90, cardImage);
-		return card;
+		Pane stack = new StackPane();
+		Rectangle cardRect = new Rectangle(90, 120, cardImage);
+		Font font = new Font(10);
+		StringBuilder str = new StringBuilder(card.getName() + "\r\nB:" + card.getCost().getBricks() + " G:" + card.getCost().getGems() + " R:"
+				+ card.getCost().getRecruiters());
+		List<Action> actions = card.getActions();
+		for (Action action : actions) {
+			str.append("A:" + action.getType());
+		}
+		Text text = new Text(str.toString());
+		text.setFont(font);
+		text.setFill(Color.WHITE);
+		stack.getChildren().addAll(cardRect, text);
+		stack.setOnMouseClicked(new EventHandler<Event>() {
+			public void handle(Event event) {
+				cardSelected(numberInHand);
+			};
+		});
+		return stack;
 	}
 
-	private void fillCardList() {
+	private void updateCardList() {
 		cardList.setAlignment(Pos.CENTER);
 		for (int i = 0; i < getCardListSize(); i++) {
-			cardList.getChildren().add(createCard());
+			if (cards[i] != null) {
+				cardList.getChildren().add(createCard(cards[i], i));
+			}
 		}
 	}
-	
-	public void update() {
-		//TODO
+
+	public void update(PlayerState ownState, PlayerState enemyState) {
+		leftBricksNumber.setText(Integer.toString(ownState.getBricks()));
+		leftDungeonNumber.setText(Integer.toString(ownState.getDungeon()));
+		leftGemsNumber.setText(Integer.toString(ownState.getGems()));
+		leftMagicNumber.setText(Integer.toString(ownState.getMagic()));
+		leftQuerryNumber.setText(Integer.toString(ownState.getQuarry()));
+		leftRecruitsNumber.setText(Integer.toString(ownState.getRecruiters()));
+		leftTowerNumber.setText(Integer.toString(ownState.getTower()));
+		leftWallNumber.setText(Integer.toString(ownState.getWall()));
+		rightBricksNumber.setText(Integer.toString(enemyState.getBricks()));
+		rightDungeonNumber.setText(Integer.toString(enemyState.getDungeon()));
+		rightGemsNumber.setText(Integer.toString(enemyState.getGems()));
+		rightMagicNumber.setText(Integer.toString(enemyState.getMagic()));
+		rightQuerryNumber.setText(Integer.toString(enemyState.getQuarry()));
+		rightRecruitsNumber.setText(Integer.toString(enemyState.getRecruiters()));
+		rightTowerNumber.setText(Integer.toString(enemyState.getTower()));
+		rightWallNumber.setText(Integer.toString(enemyState.getWall()));
+		List<Long> hand = ownState.getHand();
+		for (int i = 0; i < cards.length; i++) {
+			if (hand.size() > i) {
+				cards[i] = cardBase.getCardById(hand.get(i));
+			} else {
+				cards[i] = null;
+			}
+		}
+		updateCardList();
 	}
-	
+
 	private int getCardListSize() {
 		return cards.length;
 	}
@@ -160,7 +220,7 @@ public class GameTableFX implements MessageHandler {
 	private void initialize() {
 		stage = new Stage();
 		scene = new Scene(mainBorderPane, 800, 480);
-		fillCardList();
+		updateCardList();
 		fillUserState();
 		fillEnemyState();
 		fillCenter();
@@ -170,18 +230,36 @@ public class GameTableFX implements MessageHandler {
 		mainBorderPane.setCenter(center);
 		stage.setScene(scene);
 	}
-	
+
 	public Stage getStage() {
 		return stage;
 	}
+
+	public void start(ClientHandle serverHandle) {
+		serverHandle.addMessageHandler(this);
+		msgService.send(serverHandle, new Message(new RequestGameTableUpdate()));
+	}
 	
+	public void cardSelected(int numberInHand) {
+		GameUserAction action = new GameUserAction();
+		action.setChoosenCardInHandNumber(numberInHand);
+		action.setHasTarget(false);
+		msgService.send(serverHandle, new Message(action));
+	}
+
 	@Override
 	public boolean accept(Message message, ClientHandle caller) {
+		logger.info("GameTableFx accepts msg=" + message);
 		if (message.getClassName().equals(GameTableUpdate.class.getName())) {
-			GameTableUpdate update = message.unpackMessage();
-			// TODO
+			final GameTableUpdate update = message.unpackMessage();
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					update(update.getOwnState(), update.getEnemyState());
+				}
+			});
 		}
-		return true;
+		return false;
 	}
 
 	public static class TestFXApp extends Application {

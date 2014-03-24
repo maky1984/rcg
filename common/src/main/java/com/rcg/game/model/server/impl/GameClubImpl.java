@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.rcg.game.model.server.CardBase;
+import com.rcg.game.model.server.DeckBase;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.GameClub;
 import com.rcg.game.model.server.Player;
@@ -13,9 +15,13 @@ public class GameClubImpl implements GameClub {
 
 	private Map<Long, Game> games = new HashMap<Long, Game>();
 	
+	private CardBase cardBase = new CardBaseImpl();
+	private DeckBase deckBase = new DeckBaseImpl(cardBase);
+	
 	@Override
 	public Game createGameWithPlayer1(Player player, long deckId) {
 		Game game = new GameImpl();
+		game.setDeckBase(deckBase);
 		game.open();
 		game.setPlayer1(player, deckId);
 		games.put(game.getId(), game);

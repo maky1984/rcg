@@ -28,6 +28,8 @@ import com.rcg.server.api.TaskExecutor;
 
 public class ClientFXApplication extends Application {
 
+	public static long DEFAULT_DECK_ID = 11;
+	
 	private TaskExecutor taskExecutor;
 	private StartClientTask task;
 	private StartClientGameTask startGameTask;
@@ -148,8 +150,8 @@ public class ClientFXApplication extends Application {
 	private void startGameTable() {
 		GameTableFX gameTable = new GameTableFX();
 		gameTable.setMsgService(task.getMessageService());
+		gameTable.start(startGameTask.getClientHandle());
 		gameTable.getStage().show();
-		startGameTask.getClientHandle().addMessageHandler(gameTable);
 	}
 
 	public void updateWaitForPlayer(final String gameName, final long gameId) {
@@ -170,5 +172,9 @@ public class ClientFXApplication extends Application {
 				popup.show(stage);
 			}
 		});
+	}
+
+	public long getDeckId() {
+		return DEFAULT_DECK_ID;
 	}
 }

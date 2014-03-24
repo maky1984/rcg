@@ -7,15 +7,12 @@ import com.rcg.game.model.server.Player;
 
 public class PlayerState {
 
-	private Player player;
-
 	private int bricks, gems, recruiters, quarry, magic, dungeon, wall, tower;
-	private List<Card> hand = new ArrayList<Card>();
+	private List<Long> hand = new ArrayList<Long>();
 
 	private boolean hasTurn;
 
-	public PlayerState(Player player) {
-		this.player = player;
+	public PlayerState() {
 	}
 
 	/**
@@ -45,7 +42,7 @@ public class PlayerState {
 		return dungeon;
 	}
 
-	public List<Card> getHand() {
+	public List<Long> getHand() {
 		return hand;
 	}
 
@@ -85,7 +82,7 @@ public class PlayerState {
 		this.gems = gems;
 	}
 
-	public void setHand(List<Card> hand) {
+	public void setHand(List<Long> hand) {
 		this.hand = hand;
 	}
 
@@ -111,9 +108,5 @@ public class PlayerState {
 
 	public void setWall(int wall) {
 		this.wall = wall;
-	}
-
-	public Player getPlayer() {
-		return player;
 	}
 }

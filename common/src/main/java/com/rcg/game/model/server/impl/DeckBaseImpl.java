@@ -21,8 +21,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.rcg.game.model.Card;
 import com.rcg.game.model.Deck;
 import com.rcg.game.model.impl.DeckImpl;
+import com.rcg.game.model.server.CardBase;
 import com.rcg.game.model.server.DeckBase;
 
 public class DeckBaseImpl implements DeckBase {
@@ -40,12 +42,15 @@ public class DeckBaseImpl implements DeckBase {
 	private String filename;
 	private Map<Long, Deck> decks;
 
-	public DeckBaseImpl() {
-		this(DEFAULT_FILENAME);
+	private CardBase cardBase;
+
+	public DeckBaseImpl(CardBase cardBase) {
+		this(DEFAULT_FILENAME, cardBase);
 	}
-	
-	public DeckBaseImpl(String filename) {
+
+	public DeckBaseImpl(String filename, CardBase cardBase) {
 		this.filename = filename;
+		this.cardBase = cardBase;
 		readDecks();
 	}
 
@@ -60,6 +65,10 @@ public class DeckBaseImpl implements DeckBase {
 		return decks.get(id);
 	}
 
+	public Card getCardById(long cardId) {
+		return cardBase.getCardById(cardId);
+	}
+
 	@Override
 	public void removeDeck(Deck deck) {
 		decks.remove(deck.getId());
@@ -70,9 +79,10 @@ public class DeckBaseImpl implements DeckBase {
 	public void updateDeck(Deck deck) {
 		decks.put(deck.getId(), deck);
 	}
-	
+
 	private Deck createDeck(long id, String name, List<Long> cardIds) {
 		Deck deck = new DeckImpl(id, name, cardIds);
+		deck.setCardBase(cardBase);
 		return deck;
 	}
 
@@ -97,7 +107,7 @@ public class DeckBaseImpl implements DeckBase {
 						Element element = (Element) node;
 						long id = Long.parseLong(element.getElementsByTagName(TAG_DECK_ID).item(0).getTextContent());
 						String name = element.getElementsByTagName(TAG_DECK_NAME).item(0).getTextContent();
-						NodeList cards = ((Element)element.getElementsByTagName(TAG_DECK_CARDS).item(0)).getElementsByTagName(TAG_DECK_CARDS_ID);
+						NodeList cards = ((Element) element.getElementsByTagName(TAG_DECK_CARDS).item(0)).getElementsByTagName(TAG_DECK_CARDS_ID);
 						List<Long> cardIds = new ArrayList<>();
 						for (int j = 0; j < cards.getLength(); j++) {
 							Node cardNode = cards.item(j);

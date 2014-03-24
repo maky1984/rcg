@@ -8,8 +8,8 @@ import com.rcg.game.model.PlayerActionProcessor;
 
 public class ActionImpl implements Action {
 
-	private ActionType type;
-	private List<Integer> values;
+	private final ActionType type;
+	private final List<Integer> values;
 
 	public ActionImpl(ActionType type, List<Integer> values) {
 		this.type = type;

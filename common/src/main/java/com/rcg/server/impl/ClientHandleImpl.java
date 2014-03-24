@@ -45,6 +45,7 @@ public class ClientHandleImpl implements ClientHandle {
 	@Override
 	public AckStatus process(Message message) {
 		System.out.println("Message:" + message);
+		MessageHandler[] handlers = this.handlers.toArray(new MessageHandler[0]);
 		for (MessageHandler handler : handlers) {
 			if (handler.accept(message, this)) {
 				return AckStatus.OK;

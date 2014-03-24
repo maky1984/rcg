@@ -5,12 +5,13 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.rcg.client.javafxapp.ClientFXApplication;
 import com.rcg.game.model.Deck;
 import com.rcg.game.model.impl.DeckImpl;
 
 public class DeckBaseImplTest {
 
-	static Deck deck1 = new DeckImpl(11, "deck1", Arrays.asList(
+	static Deck deck1 = new DeckImpl(ClientFXApplication.DEFAULT_DECK_ID, "deck1", Arrays.asList(
 			CardBaseImplTest.card1.getId(),
 			CardBaseImplTest.card2.getId(),
 			CardBaseImplTest.card3.getId(),
@@ -25,11 +26,11 @@ public class DeckBaseImplTest {
 
 	@Test
 	public void testAddDeck() {
-		DeckBaseImpl base1 = new DeckBaseImpl();
+		DeckBaseImpl base1 = new DeckBaseImpl(null);
 		base1.addDeck(deck1);
 		base1.addDeck(deck2);
 
-		DeckBaseImpl base2 = new DeckBaseImpl();
+		DeckBaseImpl base2 = new DeckBaseImpl(null);
 		Deck deck = base2.getDeckById(13);
 		Assert.assertEquals(CardBaseImplTest.card7.getId(), deck.getAllCardIds().get(3).intValue());
 	}

@@ -8,6 +8,7 @@ import com.rcg.game.model.DeckInGame;
 import com.rcg.game.model.PlayerActionListener;
 import com.rcg.game.model.PlayerActionProcessor;
 import com.rcg.game.model.PlayerState;
+import com.rcg.game.model.RuleConstants;
 import com.rcg.game.model.server.Player;
 
 public class PlayerActionProcessorImpl implements PlayerActionProcessor {
@@ -18,7 +19,7 @@ public class PlayerActionProcessorImpl implements PlayerActionProcessor {
 
 	public PlayerActionProcessorImpl(Player player, Deck deck) {
 		this.deck = new DeckInGameImpl(deck);
-		this.ownState = new PlayerState(player);
+		this.ownState = new PlayerState();
 	}
 
 	@Override
@@ -85,24 +86,30 @@ public class PlayerActionProcessorImpl implements PlayerActionProcessor {
 
 	@Override
 	public void drawCards(int number) {
-		List<Card> hand = ownState.getHand();
-		while (number > 0 && deck.hasNext()) {
+		List<Long> hand = ownState.getHand();
+		while (number > 0 && deck.hasNext() && hand.size() < RuleConstants.MAX_HAND_CARD_NUMBER) {
 			Card card = deck.drawNext();
-			number--;
-			hand.add(card);
+			if (card != null) {
+				number--;
+				hand.add(card.getId());
+			}
 		}
 		ownState.setHand(hand);
 	}
 
 	@Override
 	public void removeCardFromHand(Card card) {
-		List<Card> hand = ownState.getHand();
-		hand.remove(card);
+		List<Long> hand = ownState.getHand();
+		hand.remove(card.getId());
 		ownState.setHand(hand);
 	}
 	
 	@Override
 	public void startTurn() {
+		ownState.setBricks(ownState.getBricks() + ownState.getQuarry());
+		ownState.setGems(ownState.getGems() + ownState.getMagic());
+		ownState.setRecruiters(ownState.getRecruiters() + ownState.getDungeon());
+		drawCards(1);
 		ownState.setHasTurn(true);
 	}
 	
@@ -110,4 +117,6 @@ public class PlayerActionProcessorImpl implements PlayerActionProcessor {
 	public void endTurn() {
 		ownState.setHasTurn(false);
 	}
+	
+	
 }

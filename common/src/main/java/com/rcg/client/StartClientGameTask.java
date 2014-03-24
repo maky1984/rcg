@@ -69,7 +69,7 @@ public class StartClientGameTask implements Task, MessageHandler {
 		} else if (message.getClassName().equals(ResponseConnectToGame.class.getName())) {
 			ResponseConnectToGame response = message.unpackMessage();
 			if (response.isReadyToStart()) {
-				// executor.removeTask(updateGameListTask); - let update the game list forever
+				executor.removeTask(updateGameListTask); // maybe let update the game list forever
 				app.startGameProcess(response.getGameName(), response.getGameId());
 			} else {
 				app.updateWaitForPlayer(response.getGameName(), response.getGameId());
@@ -78,7 +78,7 @@ public class StartClientGameTask implements Task, MessageHandler {
 			ResponseUnknownPlayer response = message.unpackMessage();
 			app.updateUnknownPlayer(response.getStatus());
 		}
-		return true;
+		return false;
 	}
 	
 	private void updateGameList() {
@@ -114,6 +114,7 @@ public class StartClientGameTask implements Task, MessageHandler {
 	public void connectToGame(long id) {
 		RequestConnectToGame request = new RequestConnectToGame();
 		request.setGameId(id);
+		request.setDeckId(app.getDeckId());
 		request.setPlayerName(app.getPlayerName());
 		request.setPlayerId(app.getPlayerId());
 		messageService.send(getClientHandle(), new Message(request));
