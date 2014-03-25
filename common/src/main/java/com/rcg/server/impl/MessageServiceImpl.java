@@ -24,6 +24,7 @@ import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageHandler;
 import com.rcg.server.api.MessageService;
+import com.rcg.server.api.RCGServerException;
 
 public class MessageServiceImpl implements MessageService, Runnable {
 
@@ -213,6 +214,8 @@ public class MessageServiceImpl implements MessageService, Runnable {
 			return true;
 		} catch (IOException e) {
 			logger.error("Sending message error: ", e);
+		} catch (Throwable e) {
+			logger.error("FATAL ERROR during send Unknown ex: ", e);
 		}
 		return false;
 	}
@@ -266,6 +269,8 @@ public class MessageServiceImpl implements MessageService, Runnable {
 			}
 		} catch (IOException e) {
 			logger.error("Error during socket read/write", e);
+		} catch (Throwable e) {
+			logger.error("FATAL ERROR during read Unknown ex: ", e);
 		}
 	}
 
@@ -312,13 +317,15 @@ public class MessageServiceImpl implements MessageService, Runnable {
 		clients.add(createClient(clientHandle, socket));
 	}
 
-	public synchronized void addClientHandle(ClientHandle clientHandle) {
+	public synchronized void addClientHandle(ClientHandle clientHandle) throws RCGServerException {
 		try {
 			addClientHandle(clientHandle, new Socket(clientHandle.getHost(), clientHandle.getPort()));
 		} catch (UnknownHostException e) {
 			logger.error("addClientHandle error ", e);
+			throw new RCGServerException(RCGServerException.CONNECTION_ERROR);
 		} catch (IOException e) {
 			logger.error("addClientHandle error ", e);
+			throw new RCGServerException(RCGServerException.CONNECTION_ERROR);
 		}
 	}
  

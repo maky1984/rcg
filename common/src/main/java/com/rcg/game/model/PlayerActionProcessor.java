@@ -8,6 +8,8 @@ public interface PlayerActionProcessor {
 	
 	public void removeListener(PlayerActionListener listener);
 	
+	public void initState();
+	
 	public void startTurn();
 	
 	public void endTurn();

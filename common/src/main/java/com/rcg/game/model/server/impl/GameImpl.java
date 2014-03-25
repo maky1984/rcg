@@ -21,7 +21,6 @@ import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.Player;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
-import com.rcg.server.api.MessageHandler;
 import com.rcg.server.api.MessageService;
 import com.rcg.server.api.TaskExecutor;
 
@@ -116,6 +115,7 @@ public class GameImpl implements Game {
 				updateInnerState(ServerInnerState.INITIALIZING);
 			}
 		} else {
+			// TODO Add logic here for recovery players from new clients
 			logger.error("ERROR Cant add more players to the game");
 		}
 	}
@@ -199,10 +199,10 @@ public class GameImpl implements Game {
 		// By default player 1 has first turn
 		processor1.drawCards(HAND_SIZE);
 		processor2.drawCards(HAND_SIZE);
+		processor1.initState();
+		processor2.initState();
 		updateInnerState(ServerInnerState.WAIT_TURN_FROM_1);
 		processor1.startTurn();
-		// Clients often not ready to accept this post
-		// postCurrentStateToPlayers();
 	}
 	
 	private void doCardAction(int cardNumberInHand, ActionTarget target) {
@@ -221,7 +221,11 @@ public class GameImpl implements Game {
 			// get card actions
 			List<Action> actions = card.getActions();
 			for (Action action : actions) {
-				action.execute(cardOwner, oppositePlayer, target);
+				if (action.getType().needTarget() && target != null) {
+					action.execute(cardOwner, oppositePlayer, target);
+				} else {
+					logger.error("Skip one of the action, because there is no target, action=" + action);
+				}
 			}
 		} else {
 			logger.error("Card with cost:" + cost + " cant be prcessed with player:" + cardOwner + " No resources.");

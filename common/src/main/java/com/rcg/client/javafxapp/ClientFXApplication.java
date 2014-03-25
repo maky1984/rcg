@@ -6,7 +6,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,14 +13,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import com.rcg.client.StartClientTask;
 import com.rcg.client.StartClientGameTask;
+import com.rcg.client.StartClientTask;
 import com.rcg.common.GameView;
 import com.rcg.server.api.Task;
 import com.rcg.server.api.TaskExecutor;
@@ -29,7 +26,7 @@ import com.rcg.server.api.TaskExecutor;
 public class ClientFXApplication extends Application {
 
 	public static long DEFAULT_DECK_ID = 11;
-	
+
 	private TaskExecutor taskExecutor;
 	private StartClientTask task;
 	private StartClientGameTask startGameTask;
@@ -48,8 +45,11 @@ public class ClientFXApplication extends Application {
 	@Override
 	public void start(final Stage stage) throws Exception {
 		this.stage = stage;
+		stage.setHeight(300);
+		stage.setWidth(400);
 		final Label statusLabel = new Label();
 		popup = new Popup();
+		popup.setAutoHide(true);
 		bConnect.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -146,7 +146,7 @@ public class ClientFXApplication extends Application {
 			}
 		});
 	}
-	
+
 	private void startGameTable() {
 		GameTableFX gameTable = new GameTableFX();
 		gameTable.setMsgService(task.getMessageService());
@@ -164,11 +164,15 @@ public class ClientFXApplication extends Application {
 	}
 
 	public void updateUnknownPlayer(final String status) {
+		updatePopup("Unknown player:" + status);
+	}
+
+	public void updatePopup(final String status) {
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
 				popup.getContent().clear();
-				popup.getContent().addAll(new Label("Unknown player:" + status));
+				popup.getContent().addAll(new Label(status));
 				popup.show(stage);
 			}
 		});

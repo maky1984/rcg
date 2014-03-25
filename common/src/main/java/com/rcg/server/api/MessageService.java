@@ -8,7 +8,7 @@ public interface MessageService {
 
 	public void setDefaultMessageHandler(MessageHandler handler);
 	
-	public void addClientHandle(ClientHandle clientHandle);
+	public void addClientHandle(ClientHandle clientHandle) throws RCGServerException;
 
 	public ClientHandle[] getClients();
 

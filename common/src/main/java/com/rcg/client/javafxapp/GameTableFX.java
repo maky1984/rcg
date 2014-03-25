@@ -113,7 +113,7 @@ public class GameTableFX implements MessageHandler {
 		stack.getChildren().addAll(cardRect, text);
 		stack.setOnMouseClicked(new EventHandler<Event>() {
 			public void handle(Event event) {
-				if (ownPlayerState.hasTurn()) {
+				if (ownPlayerState.getHasTurn() == PlayerState.HAS_TURN) {
 					cardSelected(numberInHand);
 				}
 			};
@@ -134,7 +134,7 @@ public class GameTableFX implements MessageHandler {
 	public void update(PlayerState ownState, PlayerState enemyState) {
 		ownPlayerState = ownState;
 		enemyPlayerState = enemyState;
-		turnSign.setText(ownPlayerState.hasTurn() ? "YOUR TURN" : "WAIT FOR TURN");
+		turnSign.setText(ownPlayerState.getHasTurn() == PlayerState.HAS_TURN ? "YOUR TURN" : "WAIT FOR TURN");
 		leftBricksNumber.setText(Integer.toString(ownState.getBricks()));
 		leftDungeonNumber.setText(Integer.toString(ownState.getDungeon()));
 		leftGemsNumber.setText(Integer.toString(ownState.getGems()));
@@ -295,7 +295,7 @@ public class GameTableFX implements MessageHandler {
 			}
 			PlayerState ownState = new PlayerState();
 			ownState.setHand(ownHand);
-			ownState.setHasTurn(true);
+			ownState.setHasTurn(PlayerState.HAS_TURN);
 			PlayerState enemyState = new PlayerState();
 			enemyState.setHand(enemyHand);
 			ui.update(ownState, enemyState);

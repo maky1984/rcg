@@ -1,5 +1,6 @@
 package com.rcg.game.model.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.rcg.game.model.Card;
@@ -20,6 +21,7 @@ public class PlayerActionProcessorImpl implements PlayerActionProcessor {
 	public PlayerActionProcessorImpl(Player player, Deck deck) {
 		this.deck = new DeckInGameImpl(deck);
 		this.ownState = new PlayerState();
+		listeners = new ArrayList<>();
 	}
 
 	@Override
@@ -105,17 +107,27 @@ public class PlayerActionProcessorImpl implements PlayerActionProcessor {
 	}
 	
 	@Override
+	public void initState() {
+		ownState.setBricks(RuleConstants.INIT_BRICKS);
+		ownState.setGems(RuleConstants.INIT_GEMS);
+		ownState.setRecruiters(RuleConstants.INIT_RECRUITERS);
+		ownState.setDungeon(RuleConstants.INIT_DUNGEON);
+		ownState.setMagic(RuleConstants.INIT_MAGIC);
+		ownState.setQuarry(RuleConstants.INIT_QUARRY);
+	}
+	
+	@Override
 	public void startTurn() {
 		ownState.setBricks(ownState.getBricks() + ownState.getQuarry());
 		ownState.setGems(ownState.getGems() + ownState.getMagic());
 		ownState.setRecruiters(ownState.getRecruiters() + ownState.getDungeon());
 		drawCards(1);
-		ownState.setHasTurn(true);
+		ownState.setHasTurn(PlayerState.HAS_TURN);
 	}
 	
 	@Override
 	public void endTurn() {
-		ownState.setHasTurn(false);
+		ownState.setHasTurn(PlayerState.NO_TURN);
 	}
 	
 	
