@@ -88,12 +88,12 @@ public class StartServerTask implements Task, MessageHandler {
 						executor.addTask(new Task() {
 							@Override
 							public void run() {
-								game.getPlayer1().getClientHandle().addMessageHandler(game);
-								game.getPlayer2().getClientHandle().addMessageHandler(game);
+//								game.getPlayer1().getClientHandle().addMessageHandler(game);
+//								game.getPlayer2().getClientHandle().addMessageHandler(game);
+								game.start();
 								// Send response to first player, that both player are ready to play
 								messageService.send(game.getPlayer1().getClientHandle(), new Message(connectResponse.copyIt()));
 								messageService.send(caller, new Message(connectResponse));
-								game.start();
 							}
 						});
 					} else {

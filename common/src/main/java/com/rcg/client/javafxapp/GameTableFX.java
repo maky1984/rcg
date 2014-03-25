@@ -1,5 +1,6 @@
 package com.rcg.client.javafxapp;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
@@ -71,6 +72,8 @@ public class GameTableFX implements MessageHandler {
 	private Text leftWallNumber;
 	private Text rightTowerNumber;
 	private Text rightWallNumber;
+	
+	private Text turnSign;
 
 	private Card[] cards = new Card[6];
 
@@ -78,6 +81,8 @@ public class GameTableFX implements MessageHandler {
 
 	private MessageService msgService;
 	private ClientHandle serverHandle;
+	
+	private PlayerState ownPlayerState, enemyPlayerState;
 
 	public GameTableFX() {
 		initialize();
@@ -94,13 +99,13 @@ public class GameTableFX implements MessageHandler {
 	private Node createCard(final Card card, final int numberInHand) {
 		Paint cardImage = Color.GREEN;
 		Pane stack = new StackPane();
-		Rectangle cardRect = new Rectangle(90, 120, cardImage);
-		Font font = new Font(10);
+		Rectangle cardRect = new Rectangle(100, 120, cardImage);
+		Font font = new Font(14);
 		StringBuilder str = new StringBuilder(card.getName() + "\r\nB:" + card.getCost().getBricks() + " G:" + card.getCost().getGems() + " R:"
 				+ card.getCost().getRecruiters());
 		List<Action> actions = card.getActions();
 		for (Action action : actions) {
-			str.append("A:" + action.getType());
+			str.append("\r\nA:" + action.getType().toString().substring(0, 10));
 		}
 		Text text = new Text(str.toString());
 		text.setFont(font);
@@ -108,7 +113,9 @@ public class GameTableFX implements MessageHandler {
 		stack.getChildren().addAll(cardRect, text);
 		stack.setOnMouseClicked(new EventHandler<Event>() {
 			public void handle(Event event) {
-				cardSelected(numberInHand);
+				if (ownPlayerState.hasTurn()) {
+					cardSelected(numberInHand);
+				}
 			};
 		});
 		return stack;
@@ -116,6 +123,7 @@ public class GameTableFX implements MessageHandler {
 
 	private void updateCardList() {
 		cardList.setAlignment(Pos.CENTER);
+		cardList.getChildren().clear();
 		for (int i = 0; i < getCardListSize(); i++) {
 			if (cards[i] != null) {
 				cardList.getChildren().add(createCard(cards[i], i));
@@ -124,6 +132,9 @@ public class GameTableFX implements MessageHandler {
 	}
 
 	public void update(PlayerState ownState, PlayerState enemyState) {
+		ownPlayerState = ownState;
+		enemyPlayerState = enemyState;
+		turnSign.setText(ownPlayerState.hasTurn() ? "YOUR TURN" : "WAIT FOR TURN");
 		leftBricksNumber.setText(Integer.toString(ownState.getBricks()));
 		leftDungeonNumber.setText(Integer.toString(ownState.getDungeon()));
 		leftGemsNumber.setText(Integer.toString(ownState.getGems()));
@@ -228,6 +239,10 @@ public class GameTableFX implements MessageHandler {
 		mainBorderPane.setLeft(userState);
 		mainBorderPane.setRight(enemyState);
 		mainBorderPane.setCenter(center);
+		turnSign = new Text();
+		Font font = new Font(20);
+		turnSign.setFont(font);
+		mainBorderPane.setTop(turnSign);
 		stage.setScene(scene);
 	}
 
@@ -236,6 +251,7 @@ public class GameTableFX implements MessageHandler {
 	}
 
 	public void start(ClientHandle serverHandle) {
+		this.serverHandle = serverHandle;
 		serverHandle.addMessageHandler(this);
 		msgService.send(serverHandle, new Message(new RequestGameTableUpdate()));
 	}
@@ -269,6 +285,20 @@ public class GameTableFX implements MessageHandler {
 			GameTableFX ui = new GameTableFX();
 			arg0.setScene(ui.getScene());
 			arg0.show();
+			CardBase cardBase = new CardBaseImpl();
+			List<Long> ownHand = new ArrayList<Long>();
+			List<Long> enemyHand = new ArrayList<Long>();
+			List<Card> allCards = cardBase.getAllCards();
+			for (int i=0;i<5;i++) {
+				ownHand.add(allCards.get(i).getId());
+				enemyHand.add(allCards.get(i).getId());
+			}
+			PlayerState ownState = new PlayerState();
+			ownState.setHand(ownHand);
+			ownState.setHasTurn(true);
+			PlayerState enemyState = new PlayerState();
+			enemyState.setHand(enemyHand);
+			ui.update(ownState, enemyState);
 		}
 	}
 
