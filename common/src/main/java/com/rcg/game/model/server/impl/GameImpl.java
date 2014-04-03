@@ -3,6 +3,7 @@ package com.rcg.game.model.server.impl;
 import java.util.List;
 import java.util.UUID;
 
+import org.hamcrest.Condition.Step;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,18 +14,21 @@ import com.rcg.game.model.Action;
 import com.rcg.game.model.ActionTarget;
 import com.rcg.game.model.Card;
 import com.rcg.game.model.CardCost;
-import com.rcg.game.model.PlayerActionProcessor;
 import com.rcg.game.model.PlayerState;
-import com.rcg.game.model.impl.PlayerActionProcessorImpl;
+import com.rcg.game.model.RuleConstants;
 import com.rcg.game.model.server.DeckBase;
 import com.rcg.game.model.server.Game;
+import com.rcg.game.model.server.GameListener;
 import com.rcg.game.model.server.Player;
+import com.rcg.game.model.server.PlayerActionListener;
+import com.rcg.game.model.server.PlayerActionProcessor;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
 import com.rcg.server.api.MessageService;
+import com.rcg.server.api.Task;
 import com.rcg.server.api.TaskExecutor;
 
-public class GameImpl implements Game {
+public class GameImpl implements Game, PlayerActionListener, Task {
 
 	private static final Logger logger = LoggerFactory.getLogger(GameImpl.class);
 
@@ -38,6 +42,9 @@ public class GameImpl implements Game {
 		FINISHING
 	};
 
+	private static final int PING_PERIOD = 1000;
+	private static final long PLAYER_INACTIVITY_MAX_TIME = RuleConstants.PLAYER_INACTIVITY_MAX_TIME;
+	
 	private DeckBase deckBase;
 	private TaskExecutor taskExecutor;
 	private MessageService msgService;
@@ -46,12 +53,16 @@ public class GameImpl implements Game {
 
 	private Player player1;
 	private PlayerActionProcessor processor1;
+	private long player1ThinkTime;
 
 	private Player player2;
 	private PlayerActionProcessor processor2;
+	private long player2ThinkTime;
+	
+	private volatile ServerInnerState state = ServerInnerState.INIT;
 
-	private ServerInnerState state = ServerInnerState.INIT;
-
+	private GameListener listener;
+	
 	public void setDeckBase(DeckBase deckBase) {
 		this.deckBase = deckBase;
 	}
@@ -62,6 +73,11 @@ public class GameImpl implements Game {
 	
 	public void setMsgService(MessageService msgService) {
 		this.msgService = msgService;
+	}
+	
+	@Override
+	public void setListener(GameListener listener) {
+		this.listener = listener;
 	}
 
 	private void updateInnerState(ServerInnerState newState) {
@@ -104,6 +120,7 @@ public class GameImpl implements Game {
 			player1 = player;
 			player1.getClientHandle().addMessageHandler(this);
 			processor1 = new PlayerActionProcessorImpl(getPlayer1(), deckBase.getDeckById(deckId));
+			processor1.addListener(this);
 			updateInnerState(ServerInnerState.WAIT_PLAYER2);
 		} else if (state == ServerInnerState.WAIT_PLAYER2) {
 			if (player1.equals(player)) {
@@ -112,11 +129,20 @@ public class GameImpl implements Game {
 				player2 = player;
 				player2.getClientHandle().addMessageHandler(this);
 				processor2 = new PlayerActionProcessorImpl(getPlayer2(), deckBase.getDeckById(deckId));
+				processor2.addListener(this);
 				updateInnerState(ServerInnerState.INITIALIZING);
 			}
 		} else {
 			// TODO Add logic here for recovery players from new clients
 			logger.error("ERROR Cant add more players to the game");
+		}
+	}
+	
+	@Override
+	public void close() {
+		if (state == ServerInnerState.FINISHING) {
+			player1.getClientHandle().removeMessageHandler(this);
+			player2.getClientHandle().removeMessageHandler(this);
 		}
 	}
 
@@ -127,6 +153,7 @@ public class GameImpl implements Game {
 		case INIT:
 		case WAIT_PLAYER1:
 		case WAIT_PLAYER2:
+		case FINISHING:
 			result = false;
 			break;
 		default:
@@ -196,6 +223,7 @@ public class GameImpl implements Game {
 	
 	@Override
 	public void start() {
+		taskExecutor.addTask(this, PING_PERIOD);
 		// By default player 1 has first turn
 		processor1.drawCards(HAND_SIZE);
 		processor2.drawCards(HAND_SIZE);
@@ -221,7 +249,7 @@ public class GameImpl implements Game {
 			// get card actions
 			List<Action> actions = card.getActions();
 			for (Action action : actions) {
-				if (action.getType().needTarget() && target != null) {
+				if (!action.getType().needTarget() || target != null) {
 					action.execute(cardOwner, oppositePlayer, target);
 				} else {
 					logger.error("Skip one of the action, because there is no target, action=" + action);
@@ -230,6 +258,11 @@ public class GameImpl implements Game {
 		} else {
 			logger.error("Card with cost:" + cost + " cant be prcessed with player:" + cardOwner + " No resources.");
 		}
+	}
+	
+	@Override
+	public void postGameStateToPlayers() {
+		postCurrentStateToPlayers();
 	}
 	
 	private void postCurrentStateToPlayers() {
@@ -276,9 +309,22 @@ public class GameImpl implements Game {
 					target = null;
 				}
 				doCardAction(cardInHandNumber, target);
-				getActivePlayerProcessor().endTurn();
-				updateInnerState(state == ServerInnerState.WAIT_TURN_FROM_1 ? ServerInnerState.WAIT_TURN_FROM_2 : ServerInnerState.WAIT_TURN_FROM_1);
-				getActivePlayerProcessor().startTurn();
+				switch(state) {
+				case WAIT_TURN_FROM_1:
+					processor1.endTurn();
+					updateInnerState(ServerInnerState.WAIT_TURN_FROM_2);
+					processor2.startTurn();
+					break;
+				case WAIT_TURN_FROM_2:
+					processor2.endTurn();
+					updateInnerState(ServerInnerState.WAIT_TURN_FROM_1);
+					processor1.startTurn();
+					break;
+				case FINISHING:
+					break;
+				default:
+					break;
+				}
 				postCurrentStateToPlayers();
 			} else {
 				logger.info("Player:" + caller + " does not have turn now");
@@ -288,6 +334,77 @@ public class GameImpl implements Game {
 		}
 		// TODO:
 		return false;
+	}
+
+	private void gameOver(PlayerActionProcessor processor, boolean isWin) {
+		if ((processor.equals(processor1) && isWin) || (processor.equals(processor2) && !isWin)) {
+			processor1.getState().setState(PlayerState.WIN);
+			processor2.getState().setState(PlayerState.LOSE);
+		} else {
+			processor1.getState().setState(PlayerState.LOSE);
+			processor2.getState().setState(PlayerState.WIN);
+		}
+		updateInnerState(ServerInnerState.FINISHING);
+	}
+	
+	@Override
+	public void towerDecreased(PlayerActionProcessor processor) {
+	}
+
+	@Override
+	public void towerDestroyed(PlayerActionProcessor processor) {
+		gameOver(processor, false);
+	}
+
+	@Override
+	public void towerIncreased(PlayerActionProcessor processor) {
+	}
+
+	@Override
+	public void handIsEmpty(PlayerActionProcessor processor) {
+		gameOver(processor, false);
+	}
+
+	@Override
+	public void towerIsFull(PlayerActionProcessor processor) {
+		gameOver(processor, true);
+	}
+	
+	private void checkGameInactivity(PlayerActionProcessor processor, long thinkTime) {
+		if (System.currentTimeMillis() - thinkTime > PLAYER_INACTIVITY_MAX_TIME) {
+			gameOver(processor, false);
+		}
+	}
+	
+	@Override
+	public void run() {
+		switch (state) {
+		case INIT:
+		case INITIALIZING:
+		case WAIT_PLAYER1:
+		case WAIT_PLAYER2:
+			break;
+		case WAIT_TURN_FROM_1:
+			player2ThinkTime = 0;
+			if (player1ThinkTime == 0) {
+				player1ThinkTime = System.currentTimeMillis();
+			}
+			checkGameInactivity(processor1, player1ThinkTime);
+			break;
+		case WAIT_TURN_FROM_2:
+			player1ThinkTime = 0;
+			if (player2ThinkTime == 0) {
+				player2ThinkTime = System.currentTimeMillis();
+			}
+			checkGameInactivity(processor2, player2ThinkTime);
+			break;
+		case FINISHING:
+			processor1.removeListener(this);
+			processor2.removeListener(this);
+			taskExecutor.removeTask(this);
+			listener.gameIsOver(this);
+			break;
+		}
 	}
 
 }

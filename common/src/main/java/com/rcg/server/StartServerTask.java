@@ -3,15 +3,14 @@ package com.rcg.server;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rcg.common.ClientResponse;
 import com.rcg.common.GameView;
 import com.rcg.common.RequestConnectToGame;
 import com.rcg.common.RequestGameList;
 import com.rcg.common.RequestRegisterClientHandle;
 import com.rcg.common.ResponseConnectToGame;
+import com.rcg.common.ResponseErrorConnectingPlayerToGame;
 import com.rcg.common.ResponseGameList;
 import com.rcg.common.ResponseRegisterClientHandle;
-import com.rcg.common.ResponseUnknownPlayer;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.GameClub;
 import com.rcg.game.model.server.Player;
@@ -59,11 +58,18 @@ public class StartServerTask implements Task, MessageHandler {
 			Player player = playerBase.getPlayerById(request.getPlayerId());
 			if (player == null) {
 				// Player not registered
-				ResponseUnknownPlayer unknownResponse = new ResponseUnknownPlayer();
-				unknownResponse.setName(request.getName());
-				unknownResponse.setPlayerId(request.getPlayerId());
-				unknownResponse.setStatus("Unknown player. Cant find this player in registered player base");
-				messageService.send(caller, new Message(unknownResponse));
+				ResponseErrorConnectingPlayerToGame errorResponse = new ResponseErrorConnectingPlayerToGame();
+				errorResponse.setName(request.getName());
+				errorResponse.setPlayerId(request.getPlayerId());
+				errorResponse.setStatus("Unknown player. Cant find this player in registered player base");
+				messageService.send(caller, new Message(errorResponse));
+			} else if (gameClub.getGameByPlayer(player) != null) {
+				// Player can't play several games simultaneously
+				ResponseErrorConnectingPlayerToGame errorResponse = new ResponseErrorConnectingPlayerToGame();
+				errorResponse.setName(request.getName());
+				errorResponse.setPlayerId(request.getPlayerId());
+				errorResponse.setStatus("Player can't play several games simultaneously");
+				messageService.send(caller, new Message(errorResponse));
 			} else {
 				player.setClientHandle(caller);
 				final Game game;
@@ -89,16 +95,18 @@ public class StartServerTask implements Task, MessageHandler {
 							@Override
 							public void run() {
 								game.start();
-								// Send response to first player, that both player are ready to play
+								// Send response to first player, that both
+								// player are ready to play
 								messageService.send(game.getPlayer1().getClientHandle(), new Message(connectResponse.copyIt()));
 								messageService.send(caller, new Message(connectResponse));
 							}
 						});
 					} else {
-						connectResponse.setReadyToStart(false);
-						connectResponse.setGameId(game.getId());
-						connectResponse.setGameName(game.getName());
-						messageService.send(caller, new Message(connectResponse));
+						ResponseErrorConnectingPlayerToGame errorResponse = new ResponseErrorConnectingPlayerToGame();
+						errorResponse.setName(request.getName());
+						errorResponse.setPlayerId(request.getPlayerId());
+						errorResponse.setStatus("You are trying to add player that is duplicating the first player");
+						messageService.send(caller, new Message(errorResponse));
 					}
 				}
 			}

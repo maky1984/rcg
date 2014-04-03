@@ -26,11 +26,11 @@ public class DeckBaseImplTest {
 
 	@Test
 	public void testAddDeck() {
-		DeckBaseImpl base1 = new DeckBaseImpl(null);
+		DeckBaseImpl base1 = new DeckBaseImpl("decksTest.xml", null);
 		base1.addDeck(deck1);
 		base1.addDeck(deck2);
 
-		DeckBaseImpl base2 = new DeckBaseImpl(null);
+		DeckBaseImpl base2 = new DeckBaseImpl("decksTest.xml", null);
 		Deck deck = base2.getDeckById(13);
 		Assert.assertEquals(CardBaseImplTest.card7.getId(), deck.getAllCardIds().get(3).intValue());
 	}

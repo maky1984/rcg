@@ -44,6 +44,7 @@ public class Message {
 	@JsonIgnore
 	public <T> T unpackMessage() {
 		try {
+			@SuppressWarnings("unchecked")
 			Class<T> cls = (Class<T>) Class.forName(getClassName());
 			ObjectMapper mapper = new ObjectMapper();
 			T t = mapper.readValue(data, cls);

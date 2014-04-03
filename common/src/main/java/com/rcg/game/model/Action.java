@@ -2,6 +2,8 @@ package com.rcg.game.model;
 
 import java.util.List;
 
+import com.rcg.game.model.server.PlayerActionProcessor;
+
 public interface Action {
 
 	public enum ActionType {

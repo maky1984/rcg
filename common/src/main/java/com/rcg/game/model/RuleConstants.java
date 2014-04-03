@@ -12,4 +12,7 @@ public class RuleConstants {
 	public static final int INIT_MAGIC = 2;
 	public static final int INIT_DUNGEON = 2;
 	
+	public static final int MAX_TOWER = 1000;
+	
+	public static final long PLAYER_INACTIVITY_MAX_TIME = 30000; // 30 seconds
 }

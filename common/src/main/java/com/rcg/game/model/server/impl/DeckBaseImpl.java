@@ -29,7 +29,7 @@ import com.rcg.game.model.server.DeckBase;
 
 public class DeckBaseImpl implements DeckBase {
 
-	public static final String DEFAULT_FILENAME = "decks.xml";
+	public static final String DEFAULT_FILENAME = "src/main/resources/decks.xml";
 
 	private static final String TAG_DECKS = "decks";
 	private static final String TAG_DECK = "deck";

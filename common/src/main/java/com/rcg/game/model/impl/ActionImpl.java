@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.rcg.game.model.Action;
 import com.rcg.game.model.ActionTarget;
-import com.rcg.game.model.PlayerActionProcessor;
+import com.rcg.game.model.server.PlayerActionProcessor;
 
 public class ActionImpl implements Action {
 

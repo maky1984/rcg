@@ -23,7 +23,7 @@ import com.rcg.common.GameView;
 import com.rcg.server.api.Task;
 import com.rcg.server.api.TaskExecutor;
 
-public class ClientFXApplication extends Application {
+public class ClientFXApplication extends Application implements GameTableListener {
 
 	public static long DEFAULT_DECK_ID = 11;
 
@@ -41,6 +41,7 @@ public class ClientFXApplication extends Application {
 	private Pane gameList = new HBox();
 	private Popup popup;
 	private Stage stage;
+	private GameTableFX gameTable;
 
 	@Override
 	public void start(final Stage stage) throws Exception {
@@ -148,10 +149,11 @@ public class ClientFXApplication extends Application {
 	}
 
 	private void startGameTable() {
-		GameTableFX gameTable = new GameTableFX();
+		gameTable = new GameTableFX();
+		gameTable.setListener(this);
 		gameTable.setMsgService(task.getMessageService());
 		gameTable.start(startGameTask.getClientHandle());
-		gameTable.getStage().show();
+		gameTable.show();
 	}
 
 	public void updateWaitForPlayer(final String gameName, final long gameId) {
@@ -180,5 +182,11 @@ public class ClientFXApplication extends Application {
 
 	public long getDeckId() {
 		return DEFAULT_DECK_ID;
+	}
+	
+	@Override
+	public void gameOver(int state) {
+		gameTable.stop();
+		gameTable.setListener(null);
 	}
 }

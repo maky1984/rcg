@@ -1,4 +1,7 @@
-package com.rcg.game.model;
+package com.rcg.game.model.server;
+
+import com.rcg.game.model.Card;
+import com.rcg.game.model.PlayerState;
 
 public interface PlayerActionProcessor {
 

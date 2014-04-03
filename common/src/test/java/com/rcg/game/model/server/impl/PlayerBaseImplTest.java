@@ -33,10 +33,10 @@ public class PlayerBaseImplTest {
 
 	@Test
 	public void test() {
-		PlayerBase playerBase = new PlayerBaseImpl();
+		PlayerBase playerBase = new PlayerBaseImpl("playersTest.xml");
 		playerBase.addPlayer(player1);
 		playerBase.addPlayer(player2);
-		PlayerBase newPlayerBase = new PlayerBaseImpl();
+		PlayerBase newPlayerBase = new PlayerBaseImpl("playersTest.xml");
 		Player player = newPlayerBase.getPlayerById(player2.getId());
 		Assert.assertEquals(player.getName(), player2.getName());
 		Assert.assertEquals(player.getAllDeckIds().get(0).longValue(), player2.getAllDeckIds().get(0).longValue());

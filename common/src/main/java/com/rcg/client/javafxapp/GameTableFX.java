@@ -83,6 +83,8 @@ public class GameTableFX implements MessageHandler {
 	private ClientHandle serverHandle;
 	
 	private PlayerState ownPlayerState, enemyPlayerState;
+	
+	private GameTableListener listener;
 
 	public GameTableFX() {
 		initialize();
@@ -90,6 +92,10 @@ public class GameTableFX implements MessageHandler {
 
 	public void setMsgService(MessageService msgService) {
 		this.msgService = msgService;
+	}
+	
+	public void setListener(GameTableListener listener) {
+		this.listener = listener;
 	}
 
 	public Scene getScene() {
@@ -113,7 +119,7 @@ public class GameTableFX implements MessageHandler {
 		stack.getChildren().addAll(cardRect, text);
 		stack.setOnMouseClicked(new EventHandler<Event>() {
 			public void handle(Event event) {
-				if (ownPlayerState.getHasTurn() == PlayerState.HAS_TURN) {
+				if (ownPlayerState.getState() == PlayerState.HAS_TURN) {
 					cardSelected(numberInHand);
 				}
 			};
@@ -134,7 +140,26 @@ public class GameTableFX implements MessageHandler {
 	public void update(PlayerState ownState, PlayerState enemyState) {
 		ownPlayerState = ownState;
 		enemyPlayerState = enemyState;
-		turnSign.setText(ownPlayerState.getHasTurn() == PlayerState.HAS_TURN ? "YOUR TURN" : "WAIT FOR TURN");
+		switch (ownPlayerState.getState()) {
+		case PlayerState.HAS_TURN:
+			turnSign.setText("YOUR TURN");
+			break;
+		case PlayerState.NO_TURN:
+			turnSign.setText("WAIT FOR TURN");
+			break;
+		case PlayerState.WIN:
+			turnSign.setText("WIN");
+			listener.gameOver(GameTableListener.WIN);
+			break;
+		case PlayerState.LOSE:
+			turnSign.setText("LOSE");
+			listener.gameOver(GameTableListener.LOSE);
+			break;
+		case PlayerState.DRAW:
+			turnSign.setText("DRAW");
+			listener.gameOver(GameTableListener.DRAW);
+			break;
+		}
 		leftBricksNumber.setText(Integer.toString(ownState.getBricks()));
 		leftDungeonNumber.setText(Integer.toString(ownState.getDungeon()));
 		leftGemsNumber.setText(Integer.toString(ownState.getGems()));
@@ -256,6 +281,15 @@ public class GameTableFX implements MessageHandler {
 		msgService.send(serverHandle, new Message(new RequestGameTableUpdate()));
 	}
 	
+	public void show() {
+		stage.show();
+	}
+	
+	public void stop() {
+		serverHandle.removeMessageHandler(this);
+		stage.close();
+	}
+	
 	public void cardSelected(int numberInHand) {
 		GameUserAction action = new GameUserAction();
 		action.setChoosenCardInHandNumber(numberInHand);
@@ -295,7 +329,7 @@ public class GameTableFX implements MessageHandler {
 			}
 			PlayerState ownState = new PlayerState();
 			ownState.setHand(ownHand);
-			ownState.setHasTurn(PlayerState.HAS_TURN);
+			ownState.setState(PlayerState.HAS_TURN);
 			PlayerState enemyState = new PlayerState();
 			enemyState.setHand(enemyHand);
 			ui.update(ownState, enemyState);

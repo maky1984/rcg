@@ -34,9 +34,9 @@ public class CardBaseImplTest {
 
 	@Test
 	public void test() {
-		CardBaseImpl base1 = new CardBaseImpl();
+		CardBaseImpl base1 = new CardBaseImpl("cardsTest.xml");
 		base1.addCard(card1, card2, card3, card4, card5, card6, card7, card8, card9);
-		CardBaseImpl base2 = new CardBaseImpl();
+		CardBaseImpl base2 = new CardBaseImpl("cardsTest.xml");
 		List<Card> cards = base2.getAllCards();
 		Assert.assertArrayEquals(cards.toArray(new Card[0]), new Card[] { card1, card2, card3, card4, card5, card6, card7, card8, card9 });
 	}

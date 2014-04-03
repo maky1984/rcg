@@ -12,7 +12,7 @@ import com.rcg.common.RequestRegisterClientHandle;
 import com.rcg.common.ResponseConnectToGame;
 import com.rcg.common.ResponseGameList;
 import com.rcg.common.ResponseRegisterClientHandle;
-import com.rcg.common.ResponseUnknownPlayer;
+import com.rcg.common.ResponseErrorConnectingPlayerToGame;
 import com.rcg.game.model.server.Game;
 import com.rcg.server.api.ClientHandle;
 import com.rcg.server.api.Message;
@@ -86,8 +86,8 @@ public class StartClientGameTask implements Task, MessageHandler {
 			} else {
 				app.updateWaitForPlayer(response.getGameName(), response.getGameId());
 			}
-		} else if (message.getClassName().equals(ResponseUnknownPlayer.class.getName())) {
-			ResponseUnknownPlayer response = message.unpackMessage();
+		} else if (message.getClassName().equals(ResponseErrorConnectingPlayerToGame.class.getName())) {
+			ResponseErrorConnectingPlayerToGame response = message.unpackMessage();
 			app.updateUnknownPlayer(response.getStatus());
 		}
 		return false;

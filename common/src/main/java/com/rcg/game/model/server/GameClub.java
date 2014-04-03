@@ -10,6 +10,8 @@ public interface GameClub {
 	
 	public Game getGame(long id);
 	
+	public Game getGameByPlayer(Player player);
+	
 	public Game connectPlayer2ToGame(long id, Player player, long deckId);
 	
 }

@@ -32,7 +32,7 @@ import com.rcg.game.model.server.CardBase;
 
 public class CardBaseImpl implements CardBase {
 
-	public static final String DEFAULT_FILENAME = "cards.xml";
+	public static final String DEFAULT_FILENAME = "src/main/resources/cards.xml";
 
 	private static final String TAG_CARDS = "cards";
 	private static final String TAG_CARD = "card";

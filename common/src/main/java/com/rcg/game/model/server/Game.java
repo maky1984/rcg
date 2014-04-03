@@ -15,8 +15,12 @@ public interface Game extends MessageHandler {
 
 	public String getName();
 	
-	public void open();
+	public void setListener(GameListener listener);
 	
+	public void open();
+
+	public void close();
+
 	public void setPlayer1(Player player, long deckId);
 	
 	public void setPlayer2(Player player, long deckId);
@@ -30,7 +34,8 @@ public interface Game extends MessageHandler {
 	public Player getPlayer2();
 	
 	public void start();
-
+	
+	public void postGameStateToPlayers();
 	
 	// TODO: task executor and msg service should be seperated
 	

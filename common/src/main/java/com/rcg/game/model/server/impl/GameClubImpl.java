@@ -9,9 +9,10 @@ import com.rcg.game.model.server.CardBase;
 import com.rcg.game.model.server.DeckBase;
 import com.rcg.game.model.server.Game;
 import com.rcg.game.model.server.GameClub;
+import com.rcg.game.model.server.GameListener;
 import com.rcg.game.model.server.Player;
 
-public class GameClubImpl implements GameClub {
+public class GameClubImpl implements GameClub, GameListener {
 
 	private Map<Long, Game> games = new HashMap<Long, Game>();
 	
@@ -21,6 +22,7 @@ public class GameClubImpl implements GameClub {
 	@Override
 	public Game createGameWithPlayer1(Player player, long deckId) {
 		Game game = new GameImpl();
+		game.setListener(this);
 		game.setDeckBase(deckBase);
 		game.open();
 		game.setPlayer1(player, deckId);
@@ -43,6 +45,26 @@ public class GameClubImpl implements GameClub {
 	@Override
 	public List<Game> getGames() {
 		return new ArrayList<Game>(games.values());
+	}
+	
+	@Override
+	public Game getGameByPlayer(Player player) {
+		Game result = null;
+		List<Game> games = getGames();
+		for (Game game : games) {
+			if ((game.getPlayer1() != null && game.getPlayer1().equals(player)) || (game.getPlayer2() != null && game.getPlayer2().equals(player))) {
+				result = game;
+				break;
+			}
+		}
+		return result;
+	}
+	
+	@Override
+	public void gameIsOver(Game game) {
+		game.setListener(null);
+		game.close();
+		games.remove(game);
 	}
 
 }

@@ -26,7 +26,7 @@ import com.rcg.game.model.server.PlayerBase;
 
 public class PlayerBaseImpl implements PlayerBase {
 
-	public static final String DEFAULT_FILENAME = "players.xml"; 
+	public static final String DEFAULT_FILENAME = "src/main/resources/players.xml"; 
 	
 	private static final String TAG_PLAYERS = "players";
 	private static final String TAG_PLAYER = "player";
