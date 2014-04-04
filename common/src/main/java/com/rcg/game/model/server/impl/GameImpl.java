@@ -3,7 +3,6 @@ package com.rcg.game.model.server.impl;
 import java.util.List;
 import java.util.UUID;
 
-import org.hamcrest.Condition.Step;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

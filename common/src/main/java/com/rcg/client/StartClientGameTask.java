@@ -108,7 +108,7 @@ public class StartClientGameTask implements Task, MessageHandler {
 				logger.info("Response status:" + response.getStatus() + " caller=" + caller);
 				caller.removeMessageHandler(this);
 				setClientHandle(caller);
-				executor.addTask(updateGameListTask, UPDATE_GAME_LIST_PERIOD);
+				restartGameListUpdateTask();
 				return true;
 			}
 		});
@@ -126,6 +126,10 @@ public class StartClientGameTask implements Task, MessageHandler {
 
 	public void startGame() {
 		connectToGame(Game.EMPTY_GAME_ID);
+	}
+	
+	public void restartGameListUpdateTask() {
+		executor.addTask(updateGameListTask, UPDATE_GAME_LIST_PERIOD);
 	}
 
 	public void connectToGame(long id) {

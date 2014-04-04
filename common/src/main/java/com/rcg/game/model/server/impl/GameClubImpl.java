@@ -64,7 +64,7 @@ public class GameClubImpl implements GameClub, GameListener {
 	public void gameIsOver(Game game) {
 		game.setListener(null);
 		game.close();
-		games.remove(game);
+		games.remove(game.getId());
 	}
 
 }

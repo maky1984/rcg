@@ -13,6 +13,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -174,7 +177,11 @@ public class ClientFXApplication extends Application implements GameTableListene
 			@Override
 			public void run() {
 				popup.getContent().clear();
-				popup.getContent().addAll(new Label(status));
+				Label label = new Label(status);
+				label.setFont(Font.font("Tahoma", FontWeight.BOLD, 25));  
+				label.setTextFill(Color.RED);
+				label.setStyle("-fx-background-color: rgb(0,0,0,0.1);");
+				popup.getContent().addAll(label);
 				popup.show(stage);
 			}
 		});
@@ -188,5 +195,7 @@ public class ClientFXApplication extends Application implements GameTableListene
 	public void gameOver(int state) {
 		gameTable.stop();
 		gameTable.setListener(null);
+		updatePopup(state == GameTableListener.WIN ? "YOU WON" : (state == GameTableListener.LOSE ? "YOU LOST" : "DRAW"));
+		startGameTask.restartGameListUpdateTask();
 	}
 }
