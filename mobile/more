@@ -1,0 +1,97 @@
+:tasks
+
+------------------------------------------------------------
+All tasks runnable from root project
+------------------------------------------------------------
+
+Android tasks
+-------------
+androidDependencies - Displays the Android dependencies of the project
+signingReport - Displays the signing info for each variant
+
+Build tasks
+-----------
+assemble - Assembles all variants of all applications and secondary packages.
+assembleDebug - Assembles all Debug builds
+assembleDebugTest - Assembles the Test build for the Debug build
+assembleRelease - Assembles all Release builds
+build - Assembles and tests this project.
+buildDependents - Assembles and tests this project and all projects that depend on it.
+buildNeeded - Assembles and tests this project and all projects it depends on.
+classes - Assembles classes 'main'.
+clean - Deletes the build directory.
+jar - Assembles a jar archive containing the main classes.
+testClasses - Assembles classes 'test'.
+war - Generates a war archive with all the compiled classes, the web-app content and the libraries.
+
+Build Setup tasks
+-----------------
+init - Initializes a new Gradle build. [incubating]
+wrapper - Generates Gradle wrapper files. [incubating]
+
+Documentation tasks
+-------------------
+javadoc - Generates Javadoc API documentation for the main source code.
+
+Help tasks
+----------
+dependencies - Displays all dependencies declared in root project 'mobile'.
+dependencyInsight - Displays the insight into a specific dependency in root project 'mobile'.
+help - Displays a help message
+projects - Displays the sub-projects of root project 'mobile'.
+properties - Displays the properties of root project 'mobile'.
+tasks - Displays the tasks runnable from root project 'mobile' (some of the displayed tasks may belong to subprojects).
+
+IDE tasks
+---------
+afterEclipseImport - Post processing after project generation
+cleanEclipse - Cleans all Eclipse files.
+cleanIdea - Cleans IDEA project files (IML, IPR)
+eclipse - Generates all Eclipse files.
+idea - Generates IDEA project files (IML, IPR, IWS)
+
+Install tasks
+-------------
+installDebug - Installs the Debug build
+installDebugTest - Installs the Test build for the Debug build
+uninstallAll - Uninstall all applications.
+uninstallDebug - Uninstalls the Debug build
+uninstallDebugTest - Uninstalls the Test build for the Debug build
+uninstallRelease - Uninstalls the Release build
+
+Verification tasks
+------------------
+check - Runs all checks.
+connectedAndroidTest - Installs and runs the tests for Build 'debug' on connected devices.
+connectedCheck - Runs all device checks on currently connected devices.
+deviceCheck - Runs all device checks using Device Providers and Test Servers.
+lint - Runs lint on all variants.
+lintDebug - Runs lint on the Debug build
+lintRelease - Runs lint on the Release build
+test - Runs the unit tests.
+
+Web application tasks
+---------------------
+jettyRun - Uses your files as and where they are and deploys them to Jetty.
+jettyRunWar - Assembles the webapp into a war and deploys it to Jetty.
+jettyStop - Stops Jetty.
+
+Other tasks
+-----------
+cleanIdeaWorkspace
+copyAndroidNatives
+createIPA
+dist
+gwtDev
+gwtSuperDev - Runs the GWT super dev mode
+launchIOSDevice
+launchIPadSimulator
+launchIPhoneSimulator
+run
+superDev
+
+To see all tasks and more detail, run with --all.
+
+BUILD SUCCESSFUL
+
+Total time: 10.53 secs
